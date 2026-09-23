@@ -775,9 +775,12 @@ function presetCard(name, v, mine, idx) {
       renderMine();
       return
     }
-    var keep = base().hsl;
+    // Presets set the sliders; HSL and curves the user made stay unless the preset has its own.
+    var keepH = base().hsl,
+      keepC = base().curve;
     S.layers[0].v = clone(v);
-    if (keep) S.layers[0].v.hsl = keep;
+    if (keepH && !v.hsl) S.layers[0].v.hsl = keepH;
+    if (keepC && !v.curve) S.layers[0].v.curve = keepC;
     presetOn = name;
     push('Preset: ' + name);
     schedule();

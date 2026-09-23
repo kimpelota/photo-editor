@@ -36,11 +36,13 @@
     <div class="tag b" id="tagB">Before</div><div class="tag a" id="tagA">After</div>
     <div class="busy" id="busy"><i></i><span id="busyT">Rendering</span></div>
     <div class="dims" id="dims"></div>
+    <canvas id="histC" class="histo" width="200" height="80" title="Histogram (H)"></canvas>
     <div class="zbar">
       <button data-z="fit" class="on">Fit</button><button data-z="1">100%</button><button data-z="2">200%</button><span id="zl">100%</span>
       <span class="vs"></span>
       <button id="bSplit" class="on" title="Before/after split (B)">Split</button>
       <button id="bLoupe" class="on" title="Zoom loupe (L)">Loupe</button>
+      <button id="bHisto" class="on" title="Histogram (H)">Histogram</button>
     </div>
     <div class="drop" id="drop">Drop a photo to start editing</div>
   </section>
@@ -100,6 +102,10 @@
     <div class="pane" data-p="adjust">
       <div class="ph"><h2>Adjust</h2><p>Fine-tune everything. Double-click a slider to reset it.</p></div>
       <div id="adjBox"></div>
+      <div class="grp">Curves</div>
+      <div class="seg" id="curveCh"><button data-c="rgb">RGB</button><button data-c="r">Red</button><button data-c="g">Green</button><button data-c="b">Blue</button></div>
+      <canvas id="curveC" class="curve"></canvas>
+      <div class="row curve-foot"><span class="hint">Click to add a point &middot; drag off to remove</span><button class="btn ghost" id="bCurveReset">Reset</button></div>
       <div class="grp">Crop &amp; rotate</div>
       <div class="chips" id="cropC"></div>
       <div class="chips" style="margin-top:6px" id="rotC"></div>
@@ -128,6 +134,7 @@
 <script src="js/panes.js"></script>
 <script src="js/parser.js"></script>
 <script src="js/ai-pane.js"></script>
+<script src="js/curves.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

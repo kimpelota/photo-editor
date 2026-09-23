@@ -60,6 +60,7 @@ function schedule(fast) {
       ax.drawImage(proxyC, 0, 0, afterC.width, afterC.height)
     } else putC(afterC, r);
     afterUp = up;
+    renderHist(r);
     updDims();
     draw()
   }).catch(function(e) {

@@ -432,6 +432,33 @@ main {
   color: var(--ac2)
 }
 
+.histo {
+  position: absolute;
+  left: 14px;
+  bottom: 54px;
+  width: 200px;
+  height: 80px;
+  border-radius: 8px;
+  background: rgba(16, 18, 23, .8);
+  border: 1px solid var(--line);
+  pointer-events: none;
+  display: none
+}
+
+.curve {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  margin-top: 8px;
+  cursor: crosshair;
+  touch-action: none
+}
+
+.curve-foot {
+  justify-content: space-between;
+  margin-top: 2px
+}
+
 .zbar {
   position: absolute;
   right: 14px;

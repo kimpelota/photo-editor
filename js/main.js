@@ -12,6 +12,7 @@ $$('.tab').forEach(function(b) {
       p.classList.toggle('on', p.dataset.p === tab)
     });
     if (tab === 'filters') renderFilterGrid();
+    if (tab === 'adjust') drawCurve();
     refreshThumbs();
     if ((prev === 'enhance') !== (tab === 'enhance') && vstate().up.on) schedule();
     if (tab === 'ai') setTimeout(function() {
@@ -49,6 +50,7 @@ function syncUI() {
       $('#histPop').classList.remove('on')
     }
   });
+  syncCurves();
   updDims()
 }
 $('#bUndo').onclick = undo;
@@ -107,6 +109,7 @@ document.addEventListener('keydown', function(e) {
   if (typing || e.metaKey || e.ctrlKey) return;
   if (e.key === 'b' || e.key === 'B') $('#bSplit').click();
   if (e.key === 'l' || e.key === 'L') $('#bLoupe').click();
+  if (e.key === 'h' || e.key === 'H') $('#bHisto').click();
   if (e.key === 'Escape') $('#expM').classList.remove('on')
 });
 /* export */

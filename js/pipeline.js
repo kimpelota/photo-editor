@@ -210,6 +210,24 @@ function PIPE() {
     return l
   }
 
+  // Tone curves: {rgb, r, g, b}, each a list of [in, out] points (0-255).
+  // The RGB curve runs first, then the per-channel curves.
+  function curveAdj(m, cv) {
+    var M = cv.rgb ? curve(cv.rgb) : null,
+      ch = [cv.r, cv.g, cv.b].map(function(p) {
+        return p ? curve(p) : null
+      }),
+      T = ch.map(function(c) {
+        var t = new Float32Array(256);
+        for (var i = 0; i < 256; i++) {
+          var x = M ? M[i] : i;
+          t[i] = c ? c[Math.round(x)] : x
+        }
+        return t
+      });
+    return luts(m, T[0], T[1], T[2])
+  }
+
   function luts(m, R, G, B) {
     G = G || R;
     B = B || R;
@@ -685,6 +703,7 @@ function PIPE() {
         d[i + 2] = b
       }
     }
+    if (v.curve) curveAdj(m, v.curve);
     if (v.hsl) hslAdj(m, v.hsl);
     var cl = g('clarity');
     if (cl) clarity(m, cl);
@@ -1740,6 +1759,7 @@ function PIPE() {
     render: render,
     upscale: upscale,
     upSize: upSize,
+    curve: curve,
     MAX_PX: MAX_PX,
     analyze: analyze,
     resample: resample,
