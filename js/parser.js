@@ -1137,9 +1137,12 @@ function applySteps(S0, steps) {
         break;
       case 'crop':
         st.geo.crop = s.ar;
+        st.geo.rect = null;
+        st.geo.lock = undefined;
         break;
       case 'rot':
         st.geo.rot = ((st.geo.rot + s.deg) % 360 + 360) % 360;
+        st.geo.rect = null;
         break;
       case 'flip':
         st.geo[s.ax] = !st.geo[s.ax];

@@ -29,6 +29,7 @@
     <button class="tab" data-t="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="5.5"/><circle cx="15" cy="9" r="5.5"/><circle cx="12" cy="15" r="5.5"/></svg>Filters</button>
     <button class="tab" data-t="presets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="M17 13v8M13 17h8"/></svg>Presets</button>
     <button class="tab" data-t="adjust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Adjust</button>
+    <button class="tab" data-t="crop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>Crop</button>
   </nav>
   <section class="stage" id="stage">
     <canvas id="view"></canvas>
@@ -98,6 +99,18 @@
       <div class="save"><input id="pname" placeholder="Name your current settings&hellip;" maxlength="24"><button class="btn" id="bSave">Save</button></div>
       <div class="pgrid" id="mygrid"></div>
     </div>
+    <!-- CROP -->
+    <div class="pane" data-p="crop">
+      <div class="ph"><h2>Crop &amp; Straighten</h2><p>Drag the corners or edges to crop, drag inside the box to move it. Straighten levels a tilted horizon.</p></div>
+      <div class="lbl">Aspect ratio</div>
+      <div class="chips" id="cropC"></div>
+      <div id="straightS" style="margin-top:14px"></div>
+      <div class="lbl">Rotate &amp; flip</div>
+      <div class="chips" id="rotC"></div>
+      <div class="res" id="cropInfo" style="margin-top:14px"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="bCropReset">Reset crop</button><button class="btn pri" id="bCropDone">Done</button></div>
+      <div class="tip">The whole photo shows while this tab is open. <kbd>Enter</kbd> finishes.</div>
+    </div>
     <!-- ADJUST -->
     <div class="pane" data-p="adjust">
       <div class="ph"><h2>Adjust</h2><p>Fine-tune everything. Double-click a slider to reset it.</p></div>
@@ -106,9 +119,6 @@
       <div class="seg" id="curveCh"><button data-c="rgb">RGB</button><button data-c="r">Red</button><button data-c="g">Green</button><button data-c="b">Blue</button></div>
       <canvas id="curveC" class="curve"></canvas>
       <div class="row curve-foot"><span class="hint">Click to add a point &middot; drag off to remove</span><button class="btn ghost" id="bCurveReset">Reset</button></div>
-      <div class="grp">Crop &amp; rotate</div>
-      <div class="chips" id="cropC"></div>
-      <div class="chips" style="margin-top:6px" id="rotC"></div>
       <div class="tog">Protect skin tones <button class="sw" id="skinSw" aria-label="Protect skin tones"></button></div>
       <div class="grp">Edit stack <span id="stackN"></span></div>
       <ul class="stack" id="stack"></ul>
@@ -135,6 +145,7 @@
 <script src="js/parser.js"></script>
 <script src="js/ai-pane.js"></script>
 <script src="js/curves.js"></script>
+<script src="js/crop.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

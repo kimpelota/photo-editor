@@ -32,7 +32,7 @@ function mkSlider(host, o) {
     def = o.def || 0,
     row = document.createElement('div');
   row.className = 'sl';
-  row.innerHTML = '<label>' + o.label + '</label><output></output><input type="range" min="' + min + '" max="' + max + '" step="1">';
+  row.innerHTML = '<label>' + o.label + '</label><output></output><input type="range" min="' + min + '" max="' + max + '" step="' + (o.step || 1) + '">';
   var inp = row.querySelector('input'),
     out = row.querySelector('output');
 
@@ -272,38 +272,6 @@ ADJ.forEach(function(g) {
     })
   })
 })();
-var CROPS = [
-  ['Original', null],
-  ['1:1', '1:1'],
-  ['4:5', '4:5'],
-  ['3:2', '3:2'],
-  ['16:9', '16:9'],
-  ['9:16', '9:16']
-];
-$('#cropC').innerHTML = CROPS.map(function(c, i) {
-  return '<button data-i="' + i + '">' + c[0] + '</button>'
-}).join('');
-$$('#cropC button').forEach(function(b) {
-  b.onclick = function() {
-    S.geo.crop = CROPS[+b.dataset.i][1];
-    push('Crop ' + CROPS[+b.dataset.i][0]);
-    geoChanged()
-  }
-});
-$('#rotC').innerHTML = '<button data-r="-90">&#8634; Rotate left</button><button data-r="90">&#8635; Rotate right</button><button data-f="fh">&#8646; Flip H</button><button data-f="fv">&#8645; Flip V</button>';
-$$('#rotC button').forEach(function(b) {
-  b.onclick = function() {
-    if (b.dataset.r) {
-      S.geo.rot = (S.geo.rot + +b.dataset.r + 360) % 360;
-      push('Rotate ' + b.dataset.r + '°')
-    } else {
-      S.geo[b.dataset.f] = !S.geo[b.dataset.f];
-      push(b.dataset.f === 'fh' ? 'Flip horizontal' : 'Flip vertical')
-    }
-    geoChanged()
-  }
-});
-
 function geoChanged() {
   thumbsDirty = true;
   presetDirty = true;
@@ -352,7 +320,8 @@ function renderStack() {
       li.push('<li><span>' + (i === 0 ? 'Adjustments' : 'Adjustments (after filter)') + '</span><i>' + (ks.length + hs) + ' set</i>' + (i ? '<button data-i="' + i + '">&times;</button>' : '<button data-i="0">&times;</button>') + '</li>')
     } else li.push('<li><span>' + esc(fname(L.id)) + '</span><i>' + Math.round(L.s * 100) + '%</i><button data-i="' + i + '">&times;</button></li>')
   });
-  if (S.geo.crop || S.geo.rot || S.geo.fh || S.geo.fv) li.push('<li><span>Crop / rotate</span><i>' + [S.geo.crop, S.geo.rot ? S.geo.rot + '°' : '', S.geo.fh ? 'flipH' : '', S.geo.fv ? 'flipV' : ''].filter(Boolean).join(' ') + '</i><button data-g="1">&times;</button></li>');
+  var g = S.geo;
+  if (g.crop || g.rect || g.ang || g.rot || g.fh || g.fv) li.push('<li><span>Crop / rotate</span><i>' + [g.rect ? 'custom' : g.crop, g.ang ? (g.ang > 0 ? '+' : '') + g.ang.toFixed(1) + '° level' : '', g.rot ? g.rot + '°' : '', g.fh ? 'flipH' : '', g.fv ? 'flipV' : ''].filter(Boolean).join(' ') + '</i><button data-g="1">&times;</button></li>');
   if (S.up.on) li.push('<li><span>Upscale</span><i>' + S.up.f + '×</i><button data-u="1">&times;</button></li>');
   el.innerHTML = li.join('') || '<li style="color:var(--dim)"><span>No edits yet</span></li>';
   $('#stackN').textContent = li.length ? li.length + ' layer' + (li.length > 1 ? 's' : '') : '';

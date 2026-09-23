@@ -14,7 +14,9 @@ function fresh() {
       rot: 0,
       fh: false,
       fv: false,
-      crop: null
+      ang: 0,
+      crop: null,
+      rect: null
     },
     enh: null,
     layers: [{

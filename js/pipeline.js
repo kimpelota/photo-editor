@@ -36,64 +36,119 @@ function PIPE() {
     return (i >>> 0) / 4294967296
   }
 
-  function geo(m, g) {
-    if (!g) return m;
-    var o = m,
-      q = (((g.rot || 0) % 360) + 360) % 360 / 90;
-    if (q) {
-      var w = o.w,
-        h = o.h,
-        n = q % 2 ? mk(h, w) : mk(w, h),
-        s = new Uint32Array(o.d.buffer, o.d.byteOffset, w * h),
-        d = new Uint32Array(n.d.buffer),
-        nw = n.w;
-      for (var y = 0; y < h; y++)
-        for (var x = 0; x < w; x++) {
-          var nx, ny;
-          if (q == 1) {
-            nx = h - 1 - y;
-            ny = x
-          } else if (q == 2) {
-            nx = w - 1 - x;
-            ny = h - 1 - y
-          } else {
-            nx = y;
-            ny = w - 1 - x
-          }
-          d[ny * nw + nx] = s[y * w + x]
-        }
-      o = n
+  /* ---- geometry: quarter turns, flips, straighten and crop as one affine map ---- */
+  // Returns the output size and the matrix mapping output pixel coordinates to
+  // source pixel coordinates: sx = a*x + c*y + e, sy = b*x + d*y + f.
+  // g = {rot, fh, fv, ang (straighten degrees, + is clockwise), crop ('4:5' ratio,
+  // centered) or rect ({x,y,w,h} as fractions of the straightened frame)}.
+  function mmul(A, B) {
+    return [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]]
+  }
+
+  function straightFrame(wi, hi, ang) {
+    var t = Math.abs(ang || 0) * Math.PI / 180,
+      c = Math.cos(t),
+      s = Math.sin(t),
+      k = Math.min(wi / (wi * c + hi * s), hi / (wi * s + hi * c));
+    return t ? [wi * k, hi * k] : [wi, hi]
+  }
+
+  function geoMap(w, h, g) {
+    g = g || {};
+    var q = ((((g.rot || 0) % 360) + 360) % 360) / 90,
+      wi = q % 2 ? h : w,
+      hi = q % 2 ? w : h,
+      // intermediate (rotated + flipped) -> source
+      M = q === 1 ? [0, -1, 1, 0, 0, h] : q === 2 ? [-1, 0, 0, -1, w, h] : q === 3 ? [0, 1, -1, 0, w, 0] : [1, 0, 0, 1, 0, 0];
+    M = mmul(M, [g.fh ? -1 : 1, 0, 0, g.fv ? -1 : 1, g.fh ? wi : 0, g.fv ? hi : 0]);
+    var fr = straightFrame(wi, hi, g.ang),
+      ws = fr[0],
+      hs = fr[1];
+    if (g.ang) {
+      var t = -g.ang * Math.PI / 180,
+        c = Math.cos(t),
+        s = Math.sin(t);
+      // straightened frame -> intermediate: rotate about the centres
+      M = mmul(M, [c, s, -s, c, wi / 2 - c * ws / 2 + s * hs / 2, hi / 2 - s * ws / 2 - c * hs / 2])
     }
-    if (g.fh || g.fv) {
-      var w2 = o.w,
-        h2 = o.h,
-        n2 = mk(w2, h2),
-        s2 = new Uint32Array(o.d.buffer, o.d.byteOffset, w2 * h2),
-        d2 = new Uint32Array(n2.d.buffer);
-      for (var y2 = 0; y2 < h2; y2++) {
-        var sy = g.fv ? h2 - 1 - y2 : y2;
-        for (var x2 = 0; x2 < w2; x2++) d2[y2 * w2 + x2] = s2[sy * w2 + (g.fh ? w2 - 1 - x2 : x2)]
-      }
-      o = n2
-    }
-    if (g.crop) {
+    var x0 = 0,
+      y0 = 0,
+      ow = Math.round(ws),
+      oh = Math.round(hs);
+    if (g.rect) {
+      x0 = Math.round(g.rect.x * ws);
+      y0 = Math.round(g.rect.y * hs);
+      ow = Math.max(1, Math.min(Math.round(ws) - x0, Math.round(g.rect.w * ws)));
+      oh = Math.max(1, Math.min(Math.round(hs) - y0, Math.round(g.rect.h * hs)))
+    } else if (g.crop) {
       var p = g.crop.split(':').map(Number),
-        t = p[0] / p[1],
-        cw = o.w,
-        ch = Math.round(o.w / t);
-      if (ch > o.h) {
-        ch = o.h;
-        cw = Math.round(o.h * t)
+        r = p[0] / p[1],
+        W0 = Math.round(ws),
+        H0 = Math.round(hs),
+        cw = W0,
+        ch = Math.round(W0 / r);
+      if (ch > H0) {
+        ch = H0;
+        cw = Math.round(H0 * r)
       }
-      var x0 = (o.w - cw) >> 1,
-        y0 = (o.h - ch) >> 1,
-        n3 = mk(cw, ch);
-      for (var y3 = 0; y3 < ch; y3++) {
-        var a = ((y3 + y0) * o.w + x0) * 4;
-        n3.d.set(o.d.subarray(a, a + cw * 4), y3 * cw * 4)
-      }
-      o = n3
+      x0 = (W0 - cw) >> 1;
+      y0 = (H0 - ch) >> 1;
+      ow = cw;
+      oh = ch
     }
+    M = mmul(M, [1, 0, 0, 1, x0, y0]);
+    return {
+      w: ow,
+      h: oh,
+      m: M,
+      frame: [ws, hs],
+      smooth: !!g.ang
+    }
+  }
+
+  function geo(m, g) {
+    if (!g || !(g.rot % 360 || g.fh || g.fv || g.ang || g.crop || g.rect)) return m;
+    var G = geoMap(m.w, m.h, g),
+      A = G.m,
+      w = m.w,
+      h = m.h,
+      o = mk(G.w, G.h),
+      sd = m.d,
+      od = o.d;
+    if (!G.smooth) {
+      // Axis-aligned: copy pixels exactly (nearest neighbour).
+      var s32 = new Uint32Array(sd.buffer, sd.byteOffset, w * h),
+        o32 = new Uint32Array(od.buffer);
+      for (var y = 0; y < G.h; y++)
+        for (var x = 0; x < G.w; x++) {
+          var sx = Math.floor(A[0] * (x + .5) + A[2] * (y + .5) + A[4]),
+            sy = Math.floor(A[1] * (x + .5) + A[3] * (y + .5) + A[5]);
+          o32[y * G.w + x] = s32[sy * w + sx]
+        }
+      return o
+    }
+    for (var y2 = 0; y2 < G.h; y2++)
+      for (var x2 = 0; x2 < G.w; x2++) {
+        var u = A[0] * (x2 + .5) + A[2] * (y2 + .5) + A[4] - .5,
+          v = A[1] * (x2 + .5) + A[3] * (y2 + .5) + A[5] - .5;
+        u = u < 0 ? 0 : u > w - 1 ? w - 1 : u;
+        v = v < 0 ? 0 : v > h - 1 ? h - 1 : v;
+        var ix = Math.min(w - 2, u | 0),
+          iy = Math.min(h - 2, v | 0),
+          fx = u - ix,
+          fy = v - iy,
+          i00 = (iy * w + ix) * 4,
+          i10 = i00 + 4,
+          i01 = i00 + w * 4,
+          i11 = i01 + 4,
+          oi = (y2 * G.w + x2) * 4;
+        if (ix < 0) {
+          ix = 0;
+          fx = 0
+        }
+        for (var k = 0; k < 3; k++) od[oi + k] = (sd[i00 + k] * (1 - fx) + sd[i10 + k] * fx) * (1 - fy) + (sd[i01 + k] * (1 - fx) + sd[i11 + k] * fx) * fy;
+        od[oi + 3] = 255
+      }
     return o
   }
 
@@ -1756,6 +1811,7 @@ function PIPE() {
   }
   return {
     geo: geo,
+    geoMap: geoMap,
     render: render,
     upscale: upscale,
     upSize: upSize,

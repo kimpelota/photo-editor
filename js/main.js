@@ -13,7 +13,9 @@ $$('.tab').forEach(function(b) {
     });
     if (tab === 'filters') renderFilterGrid();
     if (tab === 'adjust') drawCurve();
+    if (tab === 'crop') syncCrop();
     refreshThumbs();
+    if (prev === 'crop' || tab === 'crop') schedule();
     if ((prev === 'enhance') !== (tab === 'enhance') && vstate().up.on) schedule();
     if (tab === 'ai') setTimeout(function() {
       $('#prompt').focus()
@@ -36,9 +38,7 @@ function syncUI() {
   renderEnh();
   renderStack();
   if (tab === 'filters') renderFilterGrid();
-  $$('#cropC button').forEach(function(b) {
-    b.classList.toggle('on', CROPS[+b.dataset.i][1] === S.geo.crop)
-  });
+  syncCrop();
   $('#skinSw').classList.toggle('on', S.skin);
   markPreset();
   $('#histPop').innerHTML = hist.map(function(h, i) {
@@ -110,6 +110,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'b' || e.key === 'B') $('#bSplit').click();
   if (e.key === 'l' || e.key === 'L') $('#bLoupe').click();
   if (e.key === 'h' || e.key === 'H') $('#bHisto').click();
+  if (e.key === 'Enter' && tab === 'crop') $('#bCropDone').click();
   if (e.key === 'Escape') $('#expM').classList.remove('on')
 });
 /* export */
@@ -146,24 +147,8 @@ mkSlider($('#exQ'), {
 });
 
 function geoDims(w, h, g) {
-  if (g.rot % 180) {
-    var t = w;
-    w = h;
-    h = t
-  }
-  if (g.crop) {
-    var p = g.crop.split(':').map(Number),
-      r = p[0] / p[1],
-      cw = w,
-      ch = Math.round(w / r);
-    if (ch > h) {
-      ch = h;
-      cw = Math.round(h * r)
-    }
-    w = cw;
-    h = ch
-  }
-  return [w, h]
+  var G = P.geoMap(w, h, g);
+  return [G.w, G.h]
 }
 
 function outSize() {

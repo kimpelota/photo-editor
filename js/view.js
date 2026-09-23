@@ -28,6 +28,12 @@ function schedule(fast) {
     up = upView(),
     useProxy = !!fast && !up && !!proxy,
     key = up ? 'full' : useProxy ? 'proxy' : 'work';
+  // While cropping, show the whole straightened frame so the crop box can move anywhere.
+  if (tab === 'crop') {
+    st = clone(st);
+    st.geo.crop = null;
+    st.geo.rect = null
+  }
   busy = true;
   dirty = false;
   if (useProxy) refineT = setTimeout(function() {
@@ -104,7 +110,14 @@ function layout() {
   }
 }
 
+// A stage tool (crop box, mask brush...) gets first claim on pointer input
+// and draws its overlay on top of the photo. See tool() in crop.js/masks.js.
+function tool() {
+  return typeof stageTool === 'function' ? stageTool() : null
+}
+
 function cmpOn() {
+  if (tool()) return false;
   return showSplit && (afterUp || hasEdits(vstate()))
 }
 
@@ -175,6 +188,8 @@ function draw() {
     tb.style.opacity = split < .12 ? 0 : 1;
     ta.style.opacity = split > .88 ? 0 : 1
   } else tb.style.display = ta.style.display = 'none';
+  var T = tool();
+  if (T) T.draw(vctx, R);
   $('#zl').textContent = Math.round(R.s * 100) + '%';
   $$('.zbar [data-z]').forEach(function(b) {
     b.classList.toggle('on', String(zoom) === b.dataset.z)
@@ -200,7 +215,17 @@ view.addEventListener('pointerdown', function(e) {
   if (!afterC.width) return;
   var R = layout(),
     mx = e.offsetX,
-    sx = R.x + R.w * split;
+    sx = R.x + R.w * split,
+    T = tool();
+  if (T && T.down(e, R)) {
+    drag = {
+      t: 'tool',
+      T: T
+    };
+    view.setPointerCapture(e.pointerId);
+    loupe.style.display = 'none';
+    return
+  }
   if (cmpOn() && Math.abs(mx - sx) < 18 && e.offsetY > R.y && e.offsetY < R.y + R.h) drag = {
     t: 'split'
   };
@@ -225,6 +250,11 @@ view.addEventListener('pointerdown', function(e) {
 });
 view.addEventListener('pointermove', function(e) {
   var R = layout();
+  if (drag && drag.t === 'tool') {
+    drag.T.move(e, R);
+    draw();
+    return
+  }
   if (drag) {
     if (drag.t === 'split') {
       split = Math.max(0, Math.min(1, (e.offsetX - R.x) / R.w))
@@ -235,11 +265,22 @@ view.addEventListener('pointermove', function(e) {
     draw();
     return
   }
+  var T = tool();
+  if (T) {
+    view.style.cursor = T.cursor(e, R);
+    loupe.style.display = 'none';
+    if (T.hover) {
+      T.hover(e, R);
+      draw()
+    }
+    return
+  }
   var sx = R.x + R.w * split;
   view.style.cursor = cmpOn() && Math.abs(e.offsetX - sx) < 18 ? 'ew-resize' : (R.w > R.cw - 40 || R.h > R.ch - 60) ? 'grab' : 'default';
   doLoupe(e.offsetX, e.offsetY, R)
 });
-view.addEventListener('pointerup', function() {
+view.addEventListener('pointerup', function(e) {
+  if (drag && drag.t === 'tool') drag.T.up(e, layout());
   drag = null
 });
 view.addEventListener('pointerleave', function() {
