@@ -2,7 +2,10 @@
    RENDER SCHEDULING + VIEW
    ============================================================ */
 var busy = false,
-  dirty = false;
+  dirty = false,
+  dirtyFast = true,
+  refineT = null,
+  proxyC = document.createElement('canvas');
 
 function putC(c, m) {
   c.width = m.w;
@@ -10,26 +13,36 @@ function putC(c, m) {
   c.getContext('2d').putImageData(new ImageData(m.d, m.w, m.h), 0, 0)
 }
 
-function schedule() {
+// schedule(true) is for continuous input (slider drags): it renders the
+// small proxy image for instant feedback, then refines at preview size once
+// the input settles.
+function schedule(fast) {
   if (!work) return;
+  clearTimeout(refineT);
   if (busy) {
+    dirtyFast = dirty ? dirtyFast && !!fast : !!fast;
     dirty = true;
     return
   }
-  busy = true;
-  dirty = false;
   var st = vstate(),
     up = upView(),
-    key = up ? 'full' : 'work';
+    useProxy = !!fast && !up && !!proxy,
+    key = up ? 'full' : useProxy ? 'proxy' : 'work';
+  busy = true;
+  dirty = false;
+  if (useProxy) refineT = setTimeout(function() {
+    schedule()
+  }, 220);
+  var geoKey = up ? 'full' : 'work';
   $('#busyT').textContent = up ? 'Upscaling ' + st.up.f + '×…' : 'Rendering…';
   var bt = setTimeout(function() {
     $('#busy').classList.add('on');
     if (up) $('#upProg').classList.add('on')
   }, 120);
-  var bk = key + JSON.stringify(st.geo);
+  var bk = geoKey + JSON.stringify(st.geo);
   if (bk !== beforeKey) {
     beforeKey = bk;
-    putC(beforeC, P.geo(key === 'full' ? full : work, st.geo))
+    putC(beforeC, P.geo(geoKey === 'full' ? full : work, st.geo))
   }
   job({
     type: 'render',
@@ -37,7 +50,15 @@ function schedule() {
     st: st,
     up: up
   }).then(function(r) {
-    putC(afterC, r);
+    if (useProxy) {
+      // Stretch the proxy to preview size so zoom, split and loupe keep working.
+      putC(proxyC, r);
+      afterC.width = beforeC.width;
+      afterC.height = beforeC.height;
+      var ax = afterC.getContext('2d');
+      ax.imageSmoothingQuality = 'high';
+      ax.drawImage(proxyC, 0, 0, afterC.width, afterC.height)
+    } else putC(afterC, r);
     afterUp = up;
     updDims();
     draw()
@@ -47,7 +68,7 @@ function schedule() {
   }).then(function() {
     clearTimeout(bt);
     busy = false;
-    if (dirty) schedule();
+    if (dirty) schedule(dirtyFast);
     else {
       $('#busy').classList.remove('on');
       $('#upProg').classList.remove('on')

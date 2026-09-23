@@ -198,7 +198,8 @@ $('#exGo').onclick = function() {
     type: 'render',
     key: 'full',
     st: st,
-    up: ex.s > 1
+    up: ex.s > 1,
+    cache: false
   }).then(function(m) {
     var c = document.createElement('canvas');
     putC(c, m);

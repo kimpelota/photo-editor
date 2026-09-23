@@ -1671,15 +1671,16 @@ function PIPE() {
     return o
   }
 
+  // Safari refuses canvases over 16,777,216 pixels, so every output stays under MAX_PX.
+  var MAX_PX = 16000000;
+
   function upSize(w, h, f) {
     var nw = Math.round(w * f),
-      nh = Math.round(h * f),
-      lim = Math.max(nw, nh),
-      cap = 4800;
-    if (lim > cap) {
-      var k = cap / lim;
-      nw = Math.round(nw * k);
-      nh = Math.round(nh * k)
+      nh = Math.round(h * f);
+    if (nw * nh > MAX_PX) {
+      var k = Math.sqrt(MAX_PX / (nw * nh));
+      nw = Math.floor(nw * k);
+      nh = Math.floor(nh * k)
     }
     return [nw, nh]
   }
@@ -1699,11 +1700,26 @@ function PIPE() {
   }
 
   /* ---- full render ---- */
-  function render(src, st) {
-    var m = geo(src, st.geo);
-    if (m === src) m = cp(m);
-    var base = st.skin ? cp(m) : null;
-    if (st.enh) enhance(m, st.enh);
+  // `cache` (optional, one per source image) keeps the geometry + enhance
+  // result, which is the slowest part and rarely changes while dragging sliders.
+  function render(src, st, cache) {
+    var key = JSON.stringify([st.geo, st.enh, !!st.skin]),
+      m, base;
+    if (cache && cache.src === src && cache.key === key) {
+      m = cp(cache.m);
+      base = cache.base;
+    } else {
+      m = geo(src, st.geo);
+      if (m === src) m = cp(m);
+      base = st.skin ? cp(m) : null;
+      if (st.enh) enhance(m, st.enh);
+      if (cache) {
+        cache.src = src;
+        cache.key = key;
+        cache.m = cp(m);
+        cache.base = base
+      }
+    }
     for (var i = 0; i < st.layers.length; i++) {
       var Ly = st.layers[i];
       if (Ly.t === 'adj') adjust(m, Ly.v);
@@ -1724,6 +1740,7 @@ function PIPE() {
     render: render,
     upscale: upscale,
     upSize: upSize,
+    MAX_PX: MAX_PX,
     analyze: analyze,
     resample: resample,
     FL: FL.map(function(f) {

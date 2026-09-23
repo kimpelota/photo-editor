@@ -48,7 +48,7 @@ function mkSlider(host, o) {
   inp.oninput = function() {
     o.set(+inp.value);
     paint();
-    o.live !== false && schedule()
+    o.live !== false && schedule(true)
   };
   inp.onchange = function() {
     o.commit(+inp.value)
@@ -389,11 +389,32 @@ $$('#cats button').forEach(function(b) {
   }
 });
 
-function lastFilter() {
-  for (var i = S.layers.length - 1; i >= 0; i--)
-    if (S.layers[i].t === 'flt') return S.layers[i];
-  return null
+// Filters stack: several filter layers can be applied in order. `fPos` is the
+// filter being edited (its position among filter layers), or fCount() when
+// the next pick should add a new filter on top.
+var fPos = 0;
+
+function fLayers() {
+  return S.layers.filter(function(l) {
+    return l.t === 'flt'
+  })
 }
+
+function fCount() {
+  return fLayers().length
+}
+
+function selFilter() {
+  var fl = fLayers();
+  if (fPos > fl.length) fPos = fl.length;
+  return fl[fPos] || null
+}
+
+function lastFilter() {
+  var fl = fLayers();
+  return fl[fl.length - 1] || null
+}
+
 (function() {
   var g = $('#fgrid'),
     h = '<button class="ft" data-id=""><div class="none">&#8856;</div><span>None</span></button>';
@@ -410,24 +431,14 @@ function lastFilter() {
 })();
 
 function pickFilter(id) {
-  var lf = lastFilter();
+  var sf = selFilter();
   if (!id) {
-    if (!lf) return;
-    S.layers = S.layers.filter(function(l) {
-      return l.t !== 'flt'
-    });
-    if (S.layers.length > 1 && S.layers[S.layers.length - 1].t === 'adj') {
-      var extra = S.layers.splice(1);
-      extra.forEach(function(l) {
-        Object.keys(l.v).forEach(function(k) {
-          if (k !== 'hsl') S.layers[0].v[k] = (S.layers[0].v[k] || 0) + l.v[k]
-        })
-      })
-    }
+    if (!sf) return;
+    removeFilter(sf);
     push('Removed filter')
-  } else if (lf) {
-    if (lf.id === id) return;
-    lf.id = id;
+  } else if (sf) {
+    if (sf.id === id) return;
+    sf.id = id;
     push('Filter: ' + fname(id))
   } else {
     S.layers.push({
@@ -435,45 +446,76 @@ function pickFilter(id) {
       id: id,
       s: .85
     });
-    push('Filter: ' + fname(id))
+    fPos = fCount() - 1;
+    push((fCount() > 1 ? 'Stacked filter: ' : 'Filter: ') + fname(id))
   }
-  schedule()
+  schedule();
+  renderFilterGrid()
+}
+
+function removeFilter(layer) {
+  S.layers.splice(S.layers.indexOf(layer), 1);
+  if (!fCount() && S.layers.length > 1) {
+    // No filters left: fold any "after filter" adjustments back into the base layer.
+    var extra = S.layers.splice(1);
+    extra.forEach(function(l) {
+      Object.keys(l.v).forEach(function(k) {
+        if (k !== 'hsl' && k !== 'curve') S.layers[0].v[k] = (S.layers[0].v[k] || 0) + l.v[k]
+      })
+    })
+  }
+  fPos = Math.max(0, Math.min(fPos, fCount() - 1))
 }
 
 function renderFilterGrid() {
   $$('#cats button').forEach(function(b) {
     b.classList.toggle('on', b.dataset.c === cat)
   });
-  var lf = lastFilter();
+  var sf = selFilter(),
+    fl = fLayers();
   $$('#fgrid .ft').forEach(function(b) {
     b.style.display = !b.dataset.id || cat === 'All' || b.dataset.c === cat ? '' : 'none';
-    b.classList.toggle('on', lf ? b.dataset.id === lf.id : !b.dataset.id)
+    b.classList.toggle('on', sf ? b.dataset.id === sf.id : !fl.length && !b.dataset.id)
   });
   var fs = $('#fsel');
-  if (!lf) {
+  if (!fl.length) {
     fs.innerHTML = '<div class="row"><b>No filter</b><small style="text-align:right">' + P.FL.length + ' filters · tap one to preview</small></div>';
     return
   }
-  fs.innerHTML = '<div class="row"><b>' + esc(fname(lf.id)) + '</b><small style="text-align:right">' + esc(P.FL.filter(function(f) {
-    return f[0] === lf.id
-  })[0][2]) + '</small></div><div id="fsS"></div>';
+  var chips = fl.map(function(l, i) {
+    return '<button class="fchip' + (l === sf ? ' on' : '') + '" data-i="' + i + '">' + esc(fname(l.id)) + ' <i>' + Math.round(l.s * 100) + '%</i><span class="x" title="Remove">&times;</span></button>'
+  }).join('') + '<button class="fchip add' + (sf ? '' : ' on') + '" data-i="' + fl.length + '">+ Add filter</button>';
+  fs.innerHTML = '<div class="fchips">' + chips + '</div>' + (sf ? '<div id="fsS"></div>' : '<small class="fhint">Pick a filter below to stack it on top of ' + (fl.length > 1 ? 'the others' : esc(fname(fl[0].id))) + '.</small>');
+  $$('#fsel .fchip').forEach(function(b) {
+    b.onclick = function(e) {
+      var i = +b.dataset.i;
+      if (e.target.classList.contains('x')) {
+        removeFilter(fl[i]);
+        push('Removed filter');
+        schedule()
+      } else fPos = i;
+      renderFilterGrid()
+    }
+  });
+  if (!sf) return;
   mkSlider($('#fsS'), {
-    label: 'Strength',
+    label: fname(sf.id) + ' strength',
     min: 0,
     max: 100,
     fmt: function(v) {
       return v + '%'
     },
     get: function() {
-      var l = lastFilter();
+      var l = selFilter();
       return l ? Math.round(l.s * 100) : 0
     },
     set: function(v) {
-      var l = lastFilter();
+      var l = selFilter();
       if (l) l.s = v / 100
     },
     commit: function(v) {
-      push('Filter strength ' + v + '%')
+      push('Filter strength ' + v + '%');
+      renderFilterGrid()
     }
   }).sync()
 }

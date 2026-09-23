@@ -41,6 +41,7 @@ var S = fresh(),
   plan = null,
   full = null,
   work = null,
+  proxy = null,
   small = null,
   fileName = '';
 var tab = 'enhance',
@@ -117,9 +118,11 @@ function hasEdits(st) {
 /* ============================================================
    IMAGE LOADING + SAMPLE
    ============================================================ */
-function raster(src, w, h, cap) {
-  var k = Math.min(1, cap / Math.max(w, h)),
-    c = document.createElement('canvas');
+// Draws the image at most `cap` pixels on its long edge (or `maxPx` in area).
+function raster(src, w, h, cap, maxPx) {
+  var k = Math.min(1, cap / Math.max(w, h));
+  if (maxPx && w * h * k * k > maxPx) k = Math.sqrt(maxPx / (w * h));
+  var c = document.createElement('canvas');
   c.width = Math.max(1, Math.round(w * k));
   c.height = Math.max(1, Math.round(h * k));
   var x = c.getContext('2d');
@@ -134,13 +137,15 @@ function raster(src, w, h, cap) {
 }
 
 function setImage(src, w, h, name) {
-  full = raster(src, w, h, 3000);
+  full = raster(src, w, h, 1e9, P.MAX_PX);
   work = raster(src, w, h, 1280);
+  proxy = raster(src, w, h, 640);
   small = raster(src, w, h, 200);
   sendSrc('full', full);
   sendSrc('work', work);
+  sendSrc('proxy', proxy);
   fileName = name;
-  $('#fname').textContent = name + '  ·  ' + w + '×' + h;
+  $('#fname').textContent = name + '  ·  ' + w + '×' + h + (full.w < w ? '  (editing at ' + full.w + '×' + full.h + ')' : '');
   S = fresh();
   hist = [];
   hix = -1;

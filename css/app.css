@@ -1152,6 +1152,67 @@ textarea::placeholder {
   font-size: 11px
 }
 
+.fchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px
+}
+
+.fchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 6px 0 11px;
+  border-radius: 14px;
+  border: 1px solid var(--line2);
+  background: var(--card);
+  font-weight: 600;
+  font-size: 12px
+}
+
+.fchip i {
+  font-style: normal;
+  color: var(--dim);
+  font-weight: 500
+}
+
+.fchip .x {
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: var(--mut)
+}
+
+.fchip .x:hover {
+  background: #2a2e39;
+  color: var(--tx)
+}
+
+.fchip.on {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 1px var(--ac) inset
+}
+
+.fchip.add {
+  padding: 0 11px;
+  color: var(--mut);
+  border-style: dashed
+}
+
+.fchip.add.on {
+  color: var(--tx)
+}
+
+.fhint {
+  display: block;
+  color: var(--dim);
+  font-size: 11px
+}
+
 .pgrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
