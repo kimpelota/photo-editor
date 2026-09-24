@@ -1876,8 +1876,20 @@ function PIPE() {
       out = new Float32Array(ow * oh),
       t = mk.type,
       grid = null;
+    // Editable faces: one ellipse per face, {cx, cy} as fractions of the photo and
+    // {rx, ry} as fractions of its width, rotated by ang (radians).
+    var faces = t === 'face' && mk.faces ? mk.faces.map(function(f) {
+      return {
+        x: f.cx * sw,
+        y: f.cy * sh,
+        rx: Math.max(1, f.rx * sw),
+        ry: Math.max(1, f.ry * sw),
+        c: Math.cos(f.ang || 0),
+        s: Math.sin(f.ang || 0)
+      }
+    }) : null;
     if (t === 'brush') grid = brushGrid(mk.strokes || [], sw / sh);
-    else if (t === 'subject' || t === 'background' || t === 'face') {
+    else if (!faces && (t === 'subject' || t === 'background' || t === 'face')) {
       var sg = aux && aux.seg;
       if (!sg) return null;
       grid = {
@@ -1904,6 +1916,18 @@ function PIPE() {
             dy = (v - mk.cy) / mk.ry,
             d = Math.sqrt(dx * dx + dy * dy);
           a = inner >= 1 ? (d < 1 ? 1 : 0) : 1 - ss(inner, 1, d)
+        } else if (faces) {
+          a = 0;
+          for (var fi = 0; fi < faces.length; fi++) {
+            var F = faces[fi],
+              px = u * sw - F.x,
+              py = v * sh - F.y,
+              ex = (px * F.c + py * F.s) / F.rx,
+              ey = (-px * F.s + py * F.c) / F.ry,
+              e = Math.sqrt(ex * ex + ey * ey),
+              fa = e >= 1 ? 0 : inner >= 1 ? 1 : 1 - ss(inner, 1, e);
+            if (fa > a) a = fa
+          }
         } else a = sampleGrid(grid, u, v);
         if (t === 'background') a = 1 - a;
         if (mk.inv) a = 1 - a;

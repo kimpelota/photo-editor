@@ -27,7 +27,7 @@ var MASK_TYPES = {
     face: {
       name: 'Face',
       ai: true,
-      tip: 'AI-selected faces (up to 8).'
+      tip: 'The AI puts an oval on each face. Drag an oval to move it, drag its dots to make it wider, narrower, taller or shorter. Drag on an empty spot to add a face it missed; click one and press Delete to remove it.'
     }
   },
   MASK_ADJ = [
@@ -169,18 +169,16 @@ function runSeg(need, mk) {
   }).then(function(sg) {
     st.hidden = true;
     delete mk.pending;
-    if (need === 'face' && !sg.faces) {
-      // Nothing found (a visor or mask can hide a face completely): hand over a
-      // circle the user can drag onto the face instead.
-      mk.type = 'radial';
-      mk.name = 'Face (placed by hand)';
-      mk.cx = .5;
-      mk.cy = .3;
-      mk.rx = .08;
-      mk.ry = .08 * work.w / work.h * 1.25;
-      mk.feather = .45;
-      toast('I couldn’t find a face. Drag on the face in the photo to place the mask.', 5000)
-    } else if (need === 'subject' && !sg.found) toast('No clear subject found. Try a brush or radial mask');
+    if (need === 'face') {
+      // Each face becomes an oval the user can move and resize.
+      mk.faces = clone(sg.faceShapes || []);
+      mk.feather = mk.feather == null ? .35 : mk.feather;
+      faceSel = mk.faces.length ? 0 : -1
+    }
+    if (need === 'face' && !sg.faces)
+      // A visor or cage can hide a face completely; the user can draw it instead.
+      toast('I couldn’t find a face. Drag across the face in the photo to add it.', 5000);
+    else if (need === 'subject' && !sg.found) toast('No clear subject found. Try a brush or radial mask');
     else toast(need === 'face' ? 'Found ' + sg.faces + ' face' + (sg.faces > 1 ? 's' : '') + (sg.facesEstimated ? ' (' + sg.facesEstimated + ' estimated from the body, e.g. under a helmet)' : '') : 'Subject selected');
     push('Added ' + mk.name + ' mask');
     flashOverlay();
@@ -294,7 +292,22 @@ function renderMasks() {
       schedule()
     }
   }
-  if (sel.type === 'radial') mkSlider($('#brS') || $('#mkS'), {
+  if (sel.type === 'face' && sel.faces) {
+    var fb = document.createElement('div');
+    fb.className = 'row';
+    fb.style.margin = '0 0 10px';
+    fb.innerHTML = '<button class="btn" id="bFaceDel"' + (faceSel >= 0 && sel.faces[faceSel] ? '' : ' disabled') + '>Remove selected face</button><button class="btn" id="bFaceAgain">Find faces again</button>';
+    $('#mkS').appendChild(fb);
+    $('#bFaceDel').onclick = removeFace;
+    $('#bFaceAgain').onclick = function() {
+      sel.faces = clone(SEG && SEG.faceShapes || []);
+      faceSel = sel.faces.length ? 0 : -1;
+      push('Reset face ovals');
+      renderMasks();
+      schedule()
+    }
+  }
+  if (sel.type === 'radial' || sel.type === 'face' && sel.faces) mkSlider($('#brS') || $('#mkS'), {
     label: 'Feather',
     min: 0,
     max: 100,
@@ -382,7 +395,7 @@ var mDrag = null,
 function maskTool() {
   var m = selMask();
   if (!m || m.pending || !work || m.off) return MASK_VIEW;
-  return m.type === 'brush' ? BRUSH_TOOL : m.type === 'radial' ? RADIAL_TOOL : m.type === 'linear' ? LINEAR_TOOL : MASK_VIEW
+  return m.type === 'brush' ? BRUSH_TOOL : m.type === 'radial' ? RADIAL_TOOL : m.type === 'linear' ? LINEAR_TOOL : m.type === 'face' && m.faces ? FACE_TOOL : MASK_VIEW
 }
 
 // Overlay of the selected mask as a red tint, cached until the mask or crop changes.
@@ -713,5 +726,185 @@ var LINEAR_TOOL = {
     handle(x, a, 6, '#ff6b3d');
     handle(x, b, 5);
     handle(x, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], 4)
+  }
+};
+
+/* ---------- editable face ovals ---------- */
+var faceSel = -1;
+
+// A point on a face oval: lx, ly in oval units (1 = the edge) -> photo fractions.
+function facePt(f, lx, ly) {
+  var W = work.w,
+    H = work.h,
+    c = Math.cos(f.ang || 0),
+    s = Math.sin(f.ang || 0),
+    x = lx * f.rx * W,
+    y = ly * f.ry * W;
+  return [f.cx + (x * c - y * s) / W, f.cy + (x * s + y * c) / H]
+}
+
+// Where a photo point sits relative to an oval (1 = on the edge).
+function faceDist(f, p) {
+  var W = work.w,
+    H = work.h,
+    c = Math.cos(f.ang || 0),
+    s = Math.sin(f.ang || 0),
+    px = (p[0] - f.cx) * W,
+    py = (p[1] - f.cy) * H;
+  return Math.hypot((px * c + py * s) / (f.rx * W), (-px * s + py * c) / (f.ry * W))
+}
+
+function removeFace() {
+  var m = selMask();
+  if (!m || !m.faces || !m.faces[faceSel]) return;
+  m.faces.splice(faceSel, 1);
+  faceSel = Math.min(faceSel, m.faces.length - 1);
+  push('Removed a face');
+  renderMasks();
+  schedule()
+}
+document.addEventListener('keydown', function(e) {
+  var m = selMask(),
+    typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'range';
+  if (tab === 'masks' && !typing && m && m.faces && (e.key === 'Delete' || e.key === 'Backspace') && m.faces[faceSel]) {
+    e.preventDefault();
+    removeFace()
+  }
+});
+
+var FACE_TOOL = {
+  // Handles of face i: its centre, the side dot (width) and the bottom dot (height).
+  handles: function(f, R) {
+    var sc = function(p) {
+      return toScreen(p[0], p[1], R)
+    };
+    return {
+      c: sc([f.cx, f.cy]),
+      w: sc(facePt(f, 1, 0)),
+      h: sc(facePt(f, 0, 1))
+    }
+  },
+  hit: function(e, R) {
+    var m = selMask(),
+      p = toSrc(e, R),
+      best = null;
+    // The selected face's dots first, then any face's inside.
+    var order = m.faces.map(function(f, i) {
+      return i
+    }).sort(function(a, b) {
+      return (b === faceSel) - (a === faceSel)
+    });
+    order.some(function(i) {
+      var H = FACE_TOOL.handles(m.faces[i], R);
+      ['w', 'h'].some(function(k) {
+        if (Math.hypot(e.offsetX - H[k][0], e.offsetY - H[k][1]) < 11) best = {
+          i: i,
+          k: k
+        };
+        return best
+      });
+      return best
+    });
+    if (best) return best;
+    order.some(function(i) {
+      if (faceDist(m.faces[i], p) < 1) best = {
+        i: i,
+        k: 'move'
+      };
+      return best
+    });
+    return best
+  },
+  cursor: function(e, R) {
+    var h = this.hit(e, R);
+    return !h ? 'crosshair' : h.k === 'move' ? 'move' : 'pointer'
+  },
+  down: function(e, R) {
+    var m = selMask(),
+      h = this.hit(e, R),
+      p = toSrc(e, R);
+    if (!h) {
+      // Draw a new face oval from here.
+      m.faces.push({
+        cx: p[0],
+        cy: p[1],
+        rx: .01,
+        ry: .013,
+        ang: 0
+      });
+      h = {
+        i: m.faces.length - 1,
+        k: 'new'
+      }
+    }
+    faceSel = h.i;
+    var f = m.faces[h.i];
+    mDrag = {
+      t: 'face',
+      h: h,
+      p0: p,
+      f0: clone(f)
+    };
+    renderMasks();
+    return true
+  },
+  move: function(e, R) {
+    var m = selMask(),
+      d = mDrag,
+      f = m.faces[d.h.i],
+      p = toSrc(e, R),
+      W = work.w,
+      H = work.h;
+    if (d.h.k === 'move') {
+      f.cx = d.f0.cx + p[0] - d.p0[0];
+      f.cy = d.f0.cy + p[1] - d.p0[1]
+    } else if (d.h.k === 'new') {
+      var r = Math.hypot((p[0] - f.cx) * W, (p[1] - f.cy) * H) / W;
+      f.rx = Math.max(.005, r * .8);
+      f.ry = Math.max(.006, r)
+    } else {
+      // Distance from the centre along the dragged axis sets that radius.
+      var c = Math.cos(f.ang || 0),
+        s = Math.sin(f.ang || 0),
+        px = (p[0] - f.cx) * W,
+        py = (p[1] - f.cy) * H,
+        along = d.h.k === 'w' ? px * c + py * s : -px * s + py * c;
+      if (d.h.k === 'w') f.rx = Math.max(.005, Math.abs(along) / W);
+      else f.ry = Math.max(.005, Math.abs(along) / W)
+    }
+    schedule(true)
+  },
+  up: function() {
+    var d = mDrag;
+    mDrag = null;
+    push(d.h.k === 'new' ? 'Added a face' : d.h.k === 'move' ? 'Moved a face' : 'Resized a face');
+    renderMasks();
+    schedule()
+  },
+  draw: function(x, R) {
+    var m = selMask();
+    drawOverlay(x, R);
+    x.save();
+    m.faces.forEach(function(f, i) {
+      var pts = [];
+      for (var k = 0; k <= 64; k++) {
+        var t = k / 64 * Math.PI * 2,
+          q = facePt(f, Math.cos(t), Math.sin(t));
+        pts.push(toScreen(q[0], q[1], R))
+      }
+      x.setLineDash([]);
+      x.strokeStyle = 'rgba(0,0,0,.5)';
+      x.lineWidth = 3;
+      strokePath(x, pts);
+      x.strokeStyle = i === faceSel ? '#fff' : 'rgba(255,255,255,.6)';
+      x.lineWidth = i === faceSel ? 1.8 : 1.2;
+      strokePath(x, pts);
+      if (i !== faceSel) return;
+      var H = FACE_TOOL.handles(f, R);
+      handle(x, H.c, 5, '#ff6b3d');
+      handle(x, H.w, 5);
+      handle(x, H.h, 5)
+    });
+    x.restore()
   }
 };

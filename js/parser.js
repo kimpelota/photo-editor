@@ -1260,7 +1260,13 @@ function applySteps(S0, steps) {
         st.geo.ang = Math.max(-45, Math.min(45, s.deg));
         break;
       case 'mask':
-        st.masks = (st.masks || []).concat([clone(s.mk)]);
+        var nm = clone(s.mk);
+        // AI face masks from a prompt get the same editable ovals as the Masks tab.
+        if (nm.type === 'face' && !nm.faces && typeof SEG !== 'undefined' && SEG && SEG.faceShapes) {
+          nm.faces = clone(SEG.faceShapes);
+          if (nm.feather == null) nm.feather = .35
+        }
+        st.masks = (st.masks || []).concat([nm]);
         break;
       case 'reset':
         st.masks = [];

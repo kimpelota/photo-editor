@@ -201,6 +201,9 @@ function ensureSeg(need, onStatus) {
       var q = guidedRefine(p, I, w, h, Math.max(2, Math.round(Math.max(w, h) / 200)), 4e-3);
       for (i = 0; i < w * h; i++) SEG.d[i * 4 + 1] = q[i] * 255;
       SEG.faces = F.length;
+      SEG.faceShapes = F.map(function(f) {
+        return faceEllipse(f, w, h)
+      });
       SEG.facesEstimated = F.filter(function(f) {
         return !f.poly
       }).length;
@@ -340,6 +343,58 @@ function findFaces(V, w, h, onStatus) {
     // If nothing is found, the Masks tab hands the user a circle to place instead.
     return faces
   })
+}
+
+// A found face as an editable ellipse: {cx, cy} as fractions of the photo,
+// {rx, ry} as fractions of its width. Traced outlines get an ellipse fitted to
+// their points (for points around an ellipse, variance along an axis is r²/2),
+// so a tilted head gets a tilted ellipse.
+function faceEllipse(f, w, h) {
+  var cx = f.cx,
+    cy = f.cy,
+    rx = f.rx,
+    ry = f.ry,
+    ang = f.ang || 0;
+  if (f.poly) {
+    var n = f.poly.length,
+      mx = 0,
+      my = 0,
+      sxx = 0,
+      syy = 0,
+      sxy = 0;
+    f.poly.forEach(function(p) {
+      mx += p[0] / n;
+      my += p[1] / n
+    });
+    f.poly.forEach(function(p) {
+      var dx = p[0] - mx,
+        dy = p[1] - my;
+      sxx += dx * dx / n;
+      syy += dy * dy / n;
+      sxy += dx * dy / n
+    });
+    var tr = (sxx + syy) / 2,
+      det = Math.sqrt(Math.max(0, (sxx - syy) * (sxx - syy) / 4 + sxy * sxy)),
+      l1 = tr + det,
+      l2 = tr - det;
+    // Angle of the long axis; faces are taller than wide, so measure the width
+    // along the axis at right angles to it.
+    var a1 = Math.atan2(l1 - sxx, sxy || 1e-9);
+    cx = mx;
+    cy = my;
+    ry = Math.sqrt(2 * l1) * 1.05;
+    rx = Math.sqrt(2 * Math.max(l2, 0)) * 1.05;
+    ang = a1 - Math.PI / 2;
+    if (ang > Math.PI / 2) ang -= Math.PI;
+    if (ang < -Math.PI / 2) ang += Math.PI
+  }
+  return {
+    cx: cx / w,
+    cy: cy / h,
+    rx: rx / w,
+    ry: ry / w,
+    ang: +ang.toFixed(4)
+  }
 }
 
 // DeepLab's "person" probability for every pixel, or null.
