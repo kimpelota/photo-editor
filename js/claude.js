@@ -372,6 +372,20 @@ function askClaude(text) {
   })
 }
 
+// AI masks need the segmentation grid before the preview can show them.
+function segForSteps(steps, onNeed) {
+  var needs = {};
+  steps.forEach(function(s) {
+    if (s.k === 'mask' && MASK_TYPES[s.mk.type].ai) needs[s.mk.type === 'face' ? 'face' : 'subject'] = true
+  });
+  return Object.keys(needs).reduce(function(p, need) {
+    return p.then(function() {
+      onNeed && onNeed(need);
+      return ensureSeg(need)
+    })
+  }, Promise.resolve())
+}
+
 /* ---------- plan conversion ---------- */
 // A crop box in source-photo fractions -> the straightened frame's fractions.
 function srcRectToFrame(r, g) {
@@ -589,18 +603,10 @@ function runClaude(text) {
   btn.textContent = 'Claude is looking…';
   $('#bStop').hidden = false;
   return askClaude(text).then(function(res) {
-    var steps = claudeSteps(res),
-      needs = {};
-    steps.forEach(function(s) {
-      if (s.k === 'mask' && MASK_TYPES[s.mk.type].ai) needs[s.mk.type === 'face' ? 'face' : 'subject'] = true
-    });
-    // AI masks need the segmentation grid before the preview can show them.
-    return Object.keys(needs).reduce(function(p, need) {
-      return p.then(function() {
-        btn.textContent = 'Finding the ' + need + '…';
-        return ensureSeg(need)
-      })
-    }, Promise.resolve()).then(function() {
+    var steps = claudeSteps(res);
+    return segForSteps(steps, function(need) {
+      btn.textContent = 'Finding the ' + need + '…'
+    }).then(function() {
       plan = {
         R: {
           steps: steps,

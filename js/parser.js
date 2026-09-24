@@ -739,6 +739,56 @@ function val(key, s, I) {
   return I.abs != null ? s * Math.min(100, Math.abs(I.abs)) : Math.max(-100, Math.min(100, Math.round(s * BASEV[key] * I.mul)))
 }
 
+// "blur the face", "brighten the faces", "blur the background": an edit aimed at
+// a region the AI masks can find becomes a mask step instead of a global edit.
+var MASK_EDIT = {
+  exposure: 25,
+  contrast: 22,
+  highlights: 30,
+  shadows: 30,
+  warmth: 22,
+  tint: 15,
+  saturation: 22,
+  clarity: 25,
+  sharpen: 30
+};
+
+function regionMask(c, w, carried) {
+  var region = carried || /\bfaces?\b/.test(c) ? 'face' : /\b(background|backdrop|bokeh|behind (him|her|them|me))\b/.test(c) ? 'background' : /\b(subject|foreground|the (person|people|man|woman|guy|girl|kid|dog|cat))\b/.test(c) ? 'subject' : null;
+  if (!region) return null;
+  // Adding, removing or reshaping things is still out of reach.
+  if (/\b(remove|erase|delete|replace|swap|move|insert|put|place|paste|add|draw|bigger|smaller|thinner|slimmer|fatter|taller|shorter|younger|older)\b/.test(c)) return null;
+  var I = inten(w, c),
+    down = w.some(function(x) {
+      return DOWNW[x]
+    }),
+    v = {},
+    blur = /\b(blur|blurred|blurry|bokeh|defocus|out of focus|unfocused)\b/.test(c);
+  if (blur && !down) v.blur = Math.min(100, Math.round(55 * I.mul));
+  w.forEach(function(x) {
+    var a = ATTR[x];
+    if (!a || a[0] === 'grain' || a[0] === 'fade' || a[0] === 'glow' || a[0] === 'vignette') return;
+    var key = a[0] === 'brightness' ? 'exposure' : a[0] === 'vibrance' ? 'saturation' : a[0];
+    if (key === 'sharpen' && a[1] < 0) return; // blur words, handled above
+    if (!MASK_EDIT[key] || v[key]) return;
+    var sg = a[1] === 0 ? (down ? -1 : 1) : down ? -a[1] : a[1];
+    v[key] = Math.max(-100, Math.min(100, Math.round(sg * MASK_EDIT[key] * I.mul)))
+  });
+  if (/\b(smooth|smoother|soften|softer)\b/.test(c) && !v.clarity) v.clarity = -Math.round(40 * I.mul);
+  if (!Object.keys(v).length) return null;
+  return {
+    k: 'mask',
+    mk: {
+      type: region,
+      name: region.charAt(0).toUpperCase() + region.slice(1),
+      inv: false,
+      amt: 1,
+      v: v
+    },
+    why: 'Only affects the ' + (region === 'face' ? 'face' : region) + (region === 'face' ? 's the AI finds' : ' the AI finds')
+  }
+}
+
 function parseClause(c, R) {
   var w = c.split(' ').filter(Boolean),
     has = function(x) {
@@ -755,6 +805,26 @@ function parseClause(c, R) {
       st.push(s)
     };
   if (!w.length) return;
+  var rm = regionMask(c, w);
+  // A short follow-on like "...the face brighter and warmer" keeps talking about the face.
+  if (!rm && R.lastRegion && R.lastRegion.n === st.length && w.length <= 4 && !/\b(make|it|photo|image|picture|pic|whole|everything|overall|rest)\b/.test(c)) {
+    rm = regionMask(c, w, R.lastRegion.type);
+    if (rm) {
+      var prev = st[st.length - 1];
+      Object.keys(rm.mk.v).forEach(function(k) {
+        if (prev.mk.v[k] == null) prev.mk.v[k] = rm.mk.v[k]
+      });
+      return
+    }
+  }
+  if (rm) {
+    st.push(rm);
+    R.lastRegion = {
+      type: rm.mk.type,
+      n: st.length
+    };
+    return
+  }
   var why = unsupported(c, w);
   if (why) {
     R.cant.push({

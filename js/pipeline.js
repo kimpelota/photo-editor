@@ -1943,6 +1943,18 @@ function PIPE() {
     return o
   }
 
+  // Blur for a mask. Backgrounds (and inverted masks) gather colour only from
+  // inside the mask so the subject doesn't bleed in; anything else, like a face,
+  // gets a plain blur so it keeps its shape instead of averaging to one flat colour.
+  // The radius follows the size of the masked area, so a small face isn't wiped out.
+  function maskBlur(m, al, k, behind) {
+    var big = Math.max(m.w, m.h) / 28;
+    if (behind) return maskedBlur(m, al, k * big);
+    var area = 0;
+    for (var p = 0; p < al.length; p++) area += al[p];
+    return blurRGB(m, Math.max(1, k * Math.min(big, Math.sqrt(area) / 6)))
+  }
+
   function applyMasks(m, masks, src, g, aux) {
     var G = geoMap(src.w, src.h, g);
     // Preview renders can run on a smaller image than the geometry expects; scale to fit.
@@ -1961,7 +1973,7 @@ function PIPE() {
       var al = maskAlpha(mk, G, src.w, src.h, aux);
       if (!al) return;
       var v = mk.v || {},
-        c = v.blur > 0 ? maskedBlur(m, al, v.blur / 100 * Math.max(m.w, m.h) / 28) : cp(m);
+        c = v.blur > 0 ? maskBlur(m, al, v.blur / 100, mk.type === 'background' || mk.inv) : cp(m);
       adjust(c, v);
       var d = m.d,
         cd = c.d;

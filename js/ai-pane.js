@@ -205,14 +205,26 @@ function runPrompt() {
   }
   if (!work) return;
   if (claudeKey()) return runClaude(t);
-  var R = parsePrompt(t);
-  plan = {
-    R: R,
-    text: t,
-    st: null
-  };
-  replan();
-  renderPlan();
+  var R = parsePrompt(t),
+    btn = $('#bRun');
+  btn.disabled = true;
+  segForSteps(R.steps, function(need) {
+    btn.textContent = 'Finding the ' + need + '…'
+  }).then(function() {
+    plan = {
+      R: R,
+      text: t,
+      st: null
+    };
+    replan();
+    renderPlan()
+  }, function(e) {
+    console.error(e);
+    toast('Couldn’t load the AI model for that mask. Check your internet connection.')
+  }).then(function() {
+    btn.disabled = false;
+    btn.textContent = 'Understand →'
+  });
   if (R.steps.some(function(s) {
       return s.k === 'up'
     }) && tab !== 'enhance') toast('Upscale added. Open the Upscale tab to inspect it')
