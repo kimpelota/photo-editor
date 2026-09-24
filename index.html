@@ -59,7 +59,8 @@
         <div class="res"><span>From <b id="resIn">-</b></span><span>&rarr;</span><span><em id="resOut">-</em></span></div>
         <div id="upSliders"></div>
         <div class="lbl">Resampler</div>
-        <div class="seg" id="upK"><button data-k="lanczos">Lanczos-3 &middot; crisp</button><button data-k="bicubic">Bicubic &middot; smooth</button></div>
+        <div class="seg" id="upK"><button data-k="ai-medium"><i class="ai">AI</i> Quality</button><button data-k="ai-slim"><i class="ai">AI</i> Fast</button><button data-k="lanczos">Lanczos-3</button><button data-k="bicubic">Bicubic</button></div>
+        <p class="upnote" id="upNote"></p>
         <div style="margin-top:14px" id="upAct"></div>
         <div class="prog" id="upProg"><i></i></div>
       </div>
@@ -167,6 +168,7 @@
 <script src="js/curves.js"></script>
 <script src="js/crop.js"></script>
 <script src="js/segment.js"></script>
+<script src="js/upscale-ai.js"></script>
 <script src="js/masks.js"></script>
 <script src="js/main.js"></script>
 </body>

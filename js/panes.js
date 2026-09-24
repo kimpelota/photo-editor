@@ -84,6 +84,18 @@ function seg(el, attr, get, set) {
 }
 
 /* ---------- ENHANCE / UPSCALE PANE ---------- */
+var UPK_NAME = {
+    'ai-medium': 'AI Quality',
+    'ai-slim': 'AI Fast',
+    lanczos: 'Lanczos-3',
+    bicubic: 'Bicubic'
+  },
+  UPK_NOTE = {
+    'ai-medium': 'A neural network (ESRGAN) redraws fine detail. Runs on this computer; the preview upscales the on-screen copy and Export does the full photo.',
+    'ai-slim': 'A smaller, quicker ESRGAN model. Good for big photos or slower computers.',
+    lanczos: 'Classic resampling plus sharpening. Instant, but it can’t invent detail.',
+    bicubic: 'Smooth classic resampling. Instant, softer than Lanczos.'
+  };
 var syncUpF = seg('#upF', 'f', function() {
   return S.up.f
 }, function(v) {
@@ -146,6 +158,7 @@ function renderUpAct() {
   var sz = P.upSize(w, h, S.up.f);
   $('#resIn').textContent = w + '×' + h;
   $('#resOut').textContent = sz[0] + '×' + sz[1] + (sz[0] < Math.round(w * S.up.f) ? ' (capped)' : '');
+  $('#upNote').textContent = UPK_NOTE[S.up.k] || '';
   el.innerHTML = S.up.on ? '<div class="row"><div class="done"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5 9-10"/></svg>Upscaled ' + S.up.f + '×</div><button class="btn" id="bUpOff" style="flex:0">Remove</button></div>' : '<button class="btn pri big" id="bUp">Upscale ' + S.up.f + '&times;</button>';
   var b = $('#bUp');
   if (b) b.onclick = function() {

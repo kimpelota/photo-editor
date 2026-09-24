@@ -637,6 +637,25 @@ main {
   box-shadow: inset 0 0 0 1px #3a3f4c
 }
 
+#upK {
+  display: grid;
+  grid-template-columns: 1fr 1fr
+}
+
+#upK button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px
+}
+
+.upnote {
+  color: var(--dim);
+  font-size: 11.5px;
+  margin-top: 8px;
+  line-height: 1.45
+}
+
 .seg.big button {
   height: 40px;
   font: 800 16px var(--disp)
@@ -782,6 +801,13 @@ select {
   width: 40%;
   background: linear-gradient(90deg, transparent, var(--ac), transparent);
   animation: pr 1s ease-in-out infinite
+}
+
+.prog i[style*="width"] {
+  animation: none;
+  transform: none;
+  background: var(--ac);
+  transition: width .2s
 }
 
 @keyframes pr {

@@ -22,12 +22,16 @@ function schedule(fast) {
   if (busy) {
     dirtyFast = dirty ? dirtyFast && !!fast : !!fast;
     dirty = true;
+    // A newer edit makes a running AI upscale stale; stop it and start over.
+    aiCancel();
     return
   }
   var st = vstate(),
     up = upView(),
+    ai = up && isAI(st.up.k),
     useProxy = !!fast && !up && !!proxy,
-    key = up ? 'full' : useProxy ? 'proxy' : 'work';
+    // The AI preview upscales the preview-size image; export does full resolution.
+    key = ai ? 'work' : up ? 'full' : useProxy ? 'proxy' : 'work';
   // While cropping, show the whole straightened frame so the crop box can move anywhere.
   if (tab === 'crop') {
     st = clone(st);
@@ -39,8 +43,9 @@ function schedule(fast) {
   if (useProxy) refineT = setTimeout(function() {
     schedule()
   }, 220);
-  var geoKey = up ? 'full' : 'work';
+  var geoKey = up && !ai ? 'full' : 'work';
   $('#busyT').textContent = up ? 'Upscaling ' + st.up.f + '×…' : 'Rendering…';
+  $('#upProg i').style.width = '';
   var bt = setTimeout(function() {
     $('#busy').classList.add('on');
     if (up) $('#upProg').classList.add('on')
@@ -54,7 +59,13 @@ function schedule(fast) {
     type: 'render',
     key: key,
     st: st,
-    up: up
+    up: up && !ai
+  }).then(function(r) {
+    return ai ? aiUpscaleCached(r, st, 'work', function(p, label) {
+      $('#busyT').textContent = label;
+      $('#upProg').classList.add('on');
+      $('#upProg i').style.width = Math.round(p * 100) + '%'
+    }) : r
   }).then(function(r) {
     if (useProxy) {
       // Stretch the proxy to preview size so zoom, split and loupe keep working.
@@ -70,8 +81,9 @@ function schedule(fast) {
     updDims();
     draw()
   }).catch(function(e) {
+    if (isAbort(e)) return;
     console.error(e);
-    toast('Render failed: ' + e.message)
+    toast((ai ? 'AI upscale failed: ' : 'Render failed: ') + e.message)
   }).then(function() {
     clearTimeout(bt);
     busy = false;
@@ -204,7 +216,7 @@ function updDims() {
     el.textContent = '';
     return
   }
-  if (afterUp) el.innerHTML = '<b>' + beforeC.width + '×' + beforeC.height + '</b> → <em>' + afterC.width + '×' + afterC.height + '</em> · ' + (st.up.k === 'bicubic' ? 'Bicubic' : 'Lanczos-3') + ' + detail';
+  if (afterUp) el.innerHTML = '<b>' + beforeC.width + '×' + beforeC.height + '</b> → <em>' + afterC.width + '×' + afterC.height + '</em> · ' + UPK_NAME[st.up.k] + (isAI(st.up.k) ? ' · preview' : ' + detail');
   else {
     el.innerHTML = '<b>' + afterC.width + '×' + afterC.height + '</b> preview' + (st.up.on ? ' · exports at <em>' + st.up.f + '×</em>' : '')
   }

@@ -1773,7 +1773,24 @@ function PIPE() {
     return o
   }
 
-  /* ---- full render ---- */
+  // AI upscaling runs outside the pipeline (TensorFlow.js on the main thread);
+  // these are the steps before and after the model.
+  function aiPrep(m, u) {
+    var s = u.dn > 0 ? denoise(cp(m), u.dn / 100 * .6) : m,
+      f = u.f;
+    // Shrink the input if the result would pass the canvas limit.
+    if (s.w * s.h * f * f > MAX_PX) {
+      var k = Math.sqrt(MAX_PX / (s.w * s.h * f * f));
+      s = resample(s, Math.floor(s.w * k), Math.floor(s.h * k), 'lanczos')
+    }
+    return s
+  }
+
+  function aiFinish(o, u) {
+    if (u.sharp > 0) usm(o, u.sharp / 100 * .7, Math.max(1, u.f * .5), 1.5);
+    return o
+  }
+
   /* ---- masks: local adjustments ---- */
   // A mask is {type, inv, amt, v (adjust values + blur), ...shape}. Shapes live in
   // source-image fractions (0-1), so they stay attached to the photo through
@@ -2004,6 +2021,9 @@ function PIPE() {
     maskAlpha: maskAlpha,
     brushGrid: brushGrid,
     upscale: upscale,
+    aiPrep: aiPrep,
+    aiFinish: aiFinish,
+    copy: cp,
     upSize: upSize,
     curve: curve,
     MAX_PX: MAX_PX,

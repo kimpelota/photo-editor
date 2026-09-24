@@ -174,6 +174,7 @@ $('#bExport').onclick = function() {
   $('#expM').classList.add('on')
 };
 $('#exCancel').onclick = function() {
+  if ($('#exGo').disabled) aiCancel();
   $('#expM').classList.remove('on')
 };
 $('#expM').onclick = function(e) {
@@ -183,14 +184,19 @@ $('#exGo').onclick = function() {
   var b = this;
   b.disabled = true;
   b.textContent = 'Rendering…';
-  var st = clone(S);
+  var st = clone(S),
+    ai = ex.s > 1 && isAI(st.up.k);
   st.up.f = ex.s;
   job({
     type: 'render',
     key: 'full',
     st: st,
-    up: ex.s > 1,
+    up: ex.s > 1 && !ai,
     cache: false
+  }).then(function(m) {
+    return ai ? aiUpscaleCached(m, st, 'full', function(p, label) {
+      b.textContent = label
+    }) : m
   }).then(function(m) {
     var c = document.createElement('canvas');
     putC(c, m);
@@ -211,7 +217,7 @@ $('#exGo').onclick = function() {
       b.textContent = 'Download'
     }, 'image/' + ex.f, ex.q / 100)
   }).catch(function(e) {
-    toast('Export failed: ' + e.message);
+    toast(isAbort(e) ? 'Export cancelled' : 'Export failed: ' + e.message);
     b.disabled = false;
     b.textContent = 'Download'
   })

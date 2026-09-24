@@ -30,7 +30,7 @@ function fresh() {
       f: 2,
       sharp: 60,
       dn: 35,
-      k: 'lanczos'
+      k: 'ai-medium'
     }
   }
 }
