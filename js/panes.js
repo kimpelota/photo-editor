@@ -16,14 +16,14 @@ function esc(s) {
 }
 var tt;
 
-function toast(m) {
+function toast(m, ms) {
   var t = $('#toast');
   t.textContent = m;
   t.classList.add('on');
   clearTimeout(tt);
   tt = setTimeout(function() {
     t.classList.remove('on')
-  }, 2400)
+  }, ms || 2400)
 }
 
 function mkSlider(host, o) {

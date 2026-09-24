@@ -7,13 +7,31 @@
 var MP_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1',
   MODELS = {
     subject: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/deeplab_v3/float32/1/deeplab_v3.tflite',
-    face: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
+    face: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+    pose: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task'
   },
   mpLib = null,
   segmenter = null,
   faceMarker = null,
+  poseMarker = null,
   SEG = null, // {w, h, d, subject: bool, faces: n, key}
   segBusy = null;
+
+function getSegmenter(V) {
+  if (segmenter) return Promise.resolve(segmenter);
+  return V.lib.ImageSegmenter.createFromOptions(V.fs, {
+    baseOptions: {
+      modelAssetPath: MODELS.subject,
+      delegate: 'CPU'
+    },
+    runningMode: 'IMAGE',
+    outputConfidenceMasks: true,
+    outputCategoryMask: false
+  }).then(function(sgm) {
+    segmenter = sgm;
+    return sgm
+  })
+}
 
 function loadVision() {
   if (!mpLib) mpLib = import(MP_URL + '/vision_bundle.mjs').then(function(lib) {
@@ -125,15 +143,7 @@ function ensureSeg(need, onStatus) {
       found: false
     };
     if (need === 'subject') {
-      var mk = segmenter ? Promise.resolve(segmenter) : V.lib.ImageSegmenter.createFromOptions(V.fs, {
-        baseOptions: {
-          modelAssetPath: MODELS.subject,
-          delegate: 'CPU'
-        },
-        runningMode: 'IMAGE',
-        outputConfidenceMasks: true,
-        outputCategoryMask: false
-      });
+      var mk = getSegmenter(V);
       return mk.then(function(sgm) {
         segmenter = sgm;
         onStatus && onStatus('Finding the subject…');
@@ -163,29 +173,19 @@ function ensureSeg(need, onStatus) {
         SEG.done.subject = true
       })
     }
-    var mf = faceMarker ? Promise.resolve(faceMarker) : V.lib.FaceLandmarker.createFromOptions(V.fs, {
-      baseOptions: {
-        modelAssetPath: MODELS.face,
-        delegate: 'CPU'
-      },
-      runningMode: 'IMAGE',
-      numFaces: 8
-    });
-    return mf.then(function(fm) {
-      faceMarker = fm;
-      onStatus && onStatus('Finding faces…');
-      var res = fm.detect(cv),
-        oval = ovalPath(V.lib.FaceLandmarker.FACE_LANDMARKS_FACE_OVAL),
-        c = document.createElement('canvas');
+    onStatus && onStatus(poseMarker ? 'Finding faces…' : 'Downloading the face models (first time only)…');
+    return findFaces(V, w, h, onStatus).then(function(F) {
+      var c = document.createElement('canvas');
       c.width = w;
       c.height = h;
       var x = c.getContext('2d');
       x.fillStyle = '#fff';
-      res.faceLandmarks.forEach(function(lm) {
+      F.forEach(function(f) {
         x.beginPath();
-        oval.forEach(function(k, j) {
-          j ? x.lineTo(lm[k].x * w, lm[k].y * h) : x.moveTo(lm[k].x * w, lm[k].y * h)
+        if (f.poly) f.poly.forEach(function(p, j) {
+          j ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])
         });
+        else x.ellipse(f.cx, f.cy, f.rx, f.ry, f.ang, 0, Math.PI * 2);
         x.closePath();
         x.fill()
       });
@@ -200,7 +200,10 @@ function ensureSeg(need, onStatus) {
       // Soften the outline so the edit fades out at the jaw and hairline.
       var q = guidedRefine(p, I, w, h, Math.max(2, Math.round(Math.max(w, h) / 200)), 4e-3);
       for (i = 0; i < w * h; i++) SEG.d[i * 4 + 1] = q[i] * 255;
-      SEG.faces = res.faceLandmarks.length;
+      SEG.faces = F.length;
+      SEG.facesEstimated = F.filter(function(f) {
+        return !f.poly
+      }).length;
       SEG.done.face = true
     })
   }).then(function() {
@@ -212,6 +215,187 @@ function ensureSeg(need, onStatus) {
     throw e
   });
   return segBusy
+}
+
+/* ---------- face finding ---------- */
+// Pass 1: the face-landmark model, which traces the face outline. It accepts
+// low-confidence matches (helmets, cages and goggles lower its confidence) and
+// runs on the whole photo and on zoomed-in sections, so small faces are found.
+// Pass 2: the body-pose model on the whole photo, which places the nose, eyes
+// and ears from the body; it catches helmeted heads pass 1 missed. Its guesses
+// only count when they sit on a person with background above them.
+// Returns faces in preview pixels: {poly} outlines or {cx, cy, rx, ry, ang} ellipses.
+function findFaces(V, w, h, onStatus) {
+  var src = workCanvas(),
+    tiles = [
+      [0, 0, 1, 1]
+    ];
+  [2, 3].forEach(function(n) {
+    var sz = Math.min(1, 1.5 / n);
+    for (var j = 0; j < n; j++)
+      for (var i = 0; i < n; i++) tiles.push([i * (1 - sz) / (n - 1), j * (1 - sz) / (n - 1), sz, sz, n])
+  });
+
+  // Draws one section of the photo, enlarged, for the models to look at.
+  function crop(t) {
+    var c = document.createElement('canvas'),
+      sw = t[2] * w,
+      sh = t[3] * h,
+      k = Math.min(3, 768 / Math.max(sw, sh));
+    c.width = Math.round(sw * k);
+    c.height = Math.round(sh * k);
+    var x = c.getContext('2d');
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(src, t[0] * w, t[1] * h, sw, sh, 0, 0, c.width, c.height);
+    return c
+  }
+  var faces = [];
+
+  // Keeps a face unless it overlaps one already found.
+  function keep(f) {
+    var dup = faces.some(function(g) {
+      return Math.hypot(f.cx - g.cx, f.cy - g.cy) < Math.max(f.rx, g.rx, f.ry, g.ry) * 1.3
+    });
+    if (!dup && f.rx >= 3) faces.push(f);
+    return !dup
+  }
+  var mkFace = faceMarker ? Promise.resolve(faceMarker) : V.lib.FaceLandmarker.createFromOptions(V.fs, {
+      baseOptions: {
+        modelAssetPath: MODELS.face,
+        delegate: 'CPU'
+      },
+      runningMode: 'IMAGE',
+      numFaces: 12,
+      minFaceDetectionConfidence: .3,
+      minFacePresenceConfidence: .3
+    }),
+    mkPose = poseMarker ? Promise.resolve(poseMarker) : V.lib.PoseLandmarker.createFromOptions(V.fs, {
+      baseOptions: {
+        modelAssetPath: MODELS.pose,
+        delegate: 'CPU'
+      },
+      runningMode: 'IMAGE',
+      numPoses: 8,
+      minPoseDetectionConfidence: .3,
+      minPosePresenceConfidence: .3
+    });
+  return Promise.all([mkFace, mkPose, getSegmenter(V)]).then(function(ms) {
+    faceMarker = ms[0];
+    poseMarker = ms[1];
+    var pm = personMap(ms[2], src),
+      onPerson = function(f) {
+        if (!pm) return true;
+        var x = Math.min(pm.w - 1, Math.max(0, Math.round(f.cx / w * pm.w))),
+          y = Math.min(pm.h - 1, Math.max(0, Math.round(f.cy / h * pm.h)));
+        if (pm.f[y * pm.w + x] <= .4) return false;
+        // A real head has background (or the photo's top edge) just above it;
+        // a misread hand or shirt has more body above it.
+        var r = f.ry / h * pm.h;
+        for (var yy = Math.round(y - r * 1.2); yy >= y - r * 3; yy--)
+          if (yy < 0 || pm.f[yy * pm.w + x] < .4) return true;
+        return false
+      };
+    var oval = ovalPath(V.lib.FaceLandmarker.FACE_LANDMARKS_FACE_OVAL);
+    onStatus && onStatus('Finding faces…');
+    // The 3×3 sections only run when the whole photo and 2×2 sections found nobody.
+    tiles.forEach(function(t) {
+      if (t[4] === 3 && faces.length) return;
+      var c = crop(t),
+        X = function(p) {
+          return (t[0] + p.x * t[2]) * w
+        },
+        Y = function(p) {
+          return (t[1] + p.y * t[3]) * h
+        };
+      faceMarker.detect(c).faceLandmarks.forEach(function(lm) {
+        var poly = oval.map(function(k) {
+            return [X(lm[k]), Y(lm[k])]
+          }),
+          xs = poly.map(function(p) {
+            return p[0]
+          }),
+          ys = poly.map(function(p) {
+            return p[1]
+          }),
+          x0 = Math.min.apply(0, xs),
+          x1 = Math.max.apply(0, xs),
+          y0 = Math.min.apply(0, ys),
+          y1 = Math.max.apply(0, ys);
+        keep({
+          poly: poly,
+          cx: (x0 + x1) / 2,
+          cy: (y0 + y1) / 2,
+          rx: (x1 - x0) / 2,
+          ry: (y1 - y0) / 2
+        })
+      });
+      // Pose only on the whole photo: on zoomed sections it sees partial bodies and guesses.
+      if (t.length === 4) poseMarker.detect(c).landmarks.forEach(function(lm) {
+        var f = headFromPose(lm, X, Y);
+        // Pose guesses on partly visible bodies can land on a hand or a shirt;
+        // only trust ones that sit on a person.
+        if (f && onPerson(f)) keep(f)
+      })
+    });
+    // If nothing is found, the Masks tab hands the user a circle to place instead.
+    return faces
+  })
+}
+
+// DeepLab's "person" probability for every pixel, or null.
+function personMap(sgm, cv) {
+  var res = sgm.segment(cv),
+    person = sgm.getLabels().indexOf('person'),
+    cm = res.confidenceMasks && res.confidenceMasks[person],
+    out = cm ? {
+      w: cm.width,
+      h: cm.height,
+      f: cm.getAsFloat32Array().slice()
+    } : null;
+  res.close && res.close();
+  return out
+}
+
+// A face-shaped ellipse from pose points 0-10 (nose, eyes, ears, mouth corners).
+function headFromPose(lm, X, Y) {
+  var vis = function(i) {
+      return lm[i] && (lm[i].visibility == null || lm[i].visibility > .5)
+    },
+    P = function(i) {
+      return [X(lm[i]), Y(lm[i])]
+    },
+    dist = function(a, b) {
+      return Math.hypot(a[0] - b[0], a[1] - b[1])
+    },
+    mid = function(a, b) {
+      return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    };
+  // Needs the shoulders too: a head floating on its own is usually a misread.
+  if (!vis(0) || !vis(11) || !vis(12)) return null;
+  var nose = P(0),
+    shW = dist(P(11), P(12)),
+    shY = Math.min(P(11)[1], P(12)[1]),
+    eyes = vis(2) && vis(5) ? [P(2), P(5)] : null,
+    ears = vis(7) && vis(8) ? [P(7), P(8)] : null,
+    width = Math.max(ears ? dist(ears[0], ears[1]) : 0, eyes ? dist(eyes[0], eyes[1]) * 2.3 : 0);
+  // Side-on heads: use the nose-to-ear distance instead.
+  if (vis(7)) width = Math.max(width, dist(nose, P(7)) * 1.6);
+  if (vis(8)) width = Math.max(width, dist(nose, P(8)) * 1.6);
+  if (!width || nose[1] > shY || width < shW * .2 || width > shW * 1.2) return null;
+  var eyeMid = eyes ? mid(eyes[0], eyes[1]) : nose,
+    mouth = vis(9) && vis(10) ? mid(P(9), P(10)) : [nose[0], nose[1] + width * .3],
+    c = [eyeMid[0] + (mouth[0] - eyeMid[0]) * .7, eyeMid[1] + (mouth[1] - eyeMid[1]) * .7],
+    ang = eyes ? Math.atan2(eyes[0][1] - eyes[1][1], eyes[0][0] - eyes[1][0]) : 0;
+  // Keep the tilt sensible whichever eye the model called left.
+  if (ang > Math.PI / 2) ang -= Math.PI;
+  if (ang < -Math.PI / 2) ang += Math.PI;
+  return {
+    cx: c[0],
+    cy: c[1],
+    rx: width * .52,
+    ry: width * .68,
+    ang: ang
+  }
 }
 
 // A new photo invalidates the old grid.

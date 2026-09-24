@@ -169,9 +169,19 @@ function runSeg(need, mk) {
   }).then(function(sg) {
     st.hidden = true;
     delete mk.pending;
-    if (need === 'face' && !sg.faces) toast('No faces found in this photo');
-    else if (need === 'subject' && !sg.found) toast('No clear subject found. Try a brush or radial mask');
-    else toast(need === 'face' ? 'Found ' + sg.faces + ' face' + (sg.faces > 1 ? 's' : '') : 'Subject selected');
+    if (need === 'face' && !sg.faces) {
+      // Nothing found (a visor or mask can hide a face completely): hand over a
+      // circle the user can drag onto the face instead.
+      mk.type = 'radial';
+      mk.name = 'Face (placed by hand)';
+      mk.cx = .5;
+      mk.cy = .3;
+      mk.rx = .08;
+      mk.ry = .08 * work.w / work.h * 1.25;
+      mk.feather = .45;
+      toast('I couldn’t find a face. Drag on the face in the photo to place the mask.', 5000)
+    } else if (need === 'subject' && !sg.found) toast('No clear subject found. Try a brush or radial mask');
+    else toast(need === 'face' ? 'Found ' + sg.faces + ' face' + (sg.faces > 1 ? 's' : '') + (sg.facesEstimated ? ' (' + sg.facesEstimated + ' estimated from the body, e.g. under a helmet)' : '') : 'Subject selected');
     push('Added ' + mk.name + ' mask');
     flashOverlay();
     renderMasks();
