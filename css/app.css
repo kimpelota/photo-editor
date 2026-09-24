@@ -1475,6 +1475,122 @@ textarea::placeholder {
   color: var(--tx)
 }
 
+.madd {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px
+}
+
+.madd button {
+  height: 40px;
+  border-radius: 9px;
+  border: 1px solid var(--line2);
+  background: var(--card);
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px
+}
+
+.madd button:hover {
+  border-color: #3a3f4c;
+  background: #20242e
+}
+
+i.ai {
+  font: 700 9px var(--sans);
+  font-style: normal;
+  letter-spacing: .06em;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #ff6b3d, #ff3d7f);
+  color: #fff
+}
+
+.segst {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #1b1810;
+  border: 1px solid #4a3a1a;
+  color: var(--ac2);
+  font-size: 12px
+}
+
+.mlist {
+  list-style: none;
+  display: grid;
+  gap: 5px;
+  margin-top: 12px
+}
+
+.mk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 9px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: #15171d;
+  cursor: pointer;
+  font-size: 12.5px
+}
+
+.mk.on {
+  border-color: var(--ac);
+  background: #1d1a17
+}
+
+.mk.off .mt {
+  opacity: .45
+}
+
+.mk .mt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600
+}
+
+.mk em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--dim)
+}
+
+.mk button {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--mut)
+}
+
+.mk button:hover {
+  background: #262a35;
+  color: var(--tx)
+}
+
+#maskEdit {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--card)
+}
+
+.mtip {
+  color: var(--mut);
+  font-size: 12px;
+  margin-bottom: 10px
+}
+
+.mq {
+  margin: 8px 0 4px
+}
+
 .toast {
   position: fixed;
   left: 50%;

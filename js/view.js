@@ -117,7 +117,8 @@ function tool() {
 }
 
 function cmpOn() {
-  if (tool()) return false;
+  var T = tool();
+  if (T && !T.noTool) return false;
   return showSplit && (afterUp || hasEdits(vstate()))
 }
 
@@ -266,7 +267,7 @@ view.addEventListener('pointermove', function(e) {
     return
   }
   var T = tool();
-  if (T) {
+  if (T && !T.noTool) {
     view.style.cursor = T.cursor(e, R);
     loupe.style.display = 'none';
     if (T.hover) {

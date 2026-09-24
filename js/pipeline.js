@@ -1774,9 +1774,194 @@ function PIPE() {
   }
 
   /* ---- full render ---- */
+  /* ---- masks: local adjustments ---- */
+  // A mask is {type, inv, amt, v (adjust values + blur), ...shape}. Shapes live in
+  // source-image fractions (0-1), so they stay attached to the photo through
+  // crops and rotations:
+  //   linear: x1,y1 (full effect) -> x2,y2 (none)   radial: cx,cy,rx,ry,feather
+  //   brush: strokes [{p:[[u,v]...], r (fraction of long edge), soft, erase}]
+  //   subject / background / face: read from aux.seg (AI segmentation grid).
+  function brushGrid(strokes, aspect) {
+    var gw = aspect >= 1 ? 768 : Math.max(8, Math.round(768 * aspect)),
+      gh = aspect >= 1 ? Math.max(8, Math.round(768 / aspect)) : 768,
+      a = new Float32Array(gw * gh),
+      L = Math.max(gw, gh);
+    strokes.forEach(function(st) {
+      var rad = Math.max(.5, st.r * L),
+        inner = rad * (1 - (st.soft == null ? .5 : st.soft)),
+        pts = st.p;
+
+      function stamp(cx, cy) {
+        var x0 = Math.max(0, Math.floor(cx - rad)),
+          x1 = Math.min(gw - 1, Math.ceil(cx + rad)),
+          y0 = Math.max(0, Math.floor(cy - rad)),
+          y1 = Math.min(gh - 1, Math.ceil(cy + rad));
+        for (var y = y0; y <= y1; y++)
+          for (var x = x0; x <= x1; x++) {
+            var d = Math.sqrt((x + .5 - cx) * (x + .5 - cx) + (y + .5 - cy) * (y + .5 - cy));
+            if (d >= rad) continue;
+            var val = d <= inner ? 1 : 1 - ss(inner, rad, d),
+              i = y * gw + x;
+            if (st.erase) a[i] *= 1 - val;
+            else if (val > a[i]) a[i] = val
+          }
+      }
+      for (var k = 0; k < pts.length; k++) {
+        var x = pts[k][0] * gw,
+          y = pts[k][1] * gh;
+        if (k === 0) {
+          stamp(x, y);
+          continue
+        }
+        var px = pts[k - 1][0] * gw,
+          py = pts[k - 1][1] * gh,
+          dist = Math.hypot(x - px, y - py),
+          n = Math.ceil(dist / Math.max(.5, rad * .25));
+        for (var j = 1; j <= n; j++) stamp(px + (x - px) * j / n, py + (y - py) * j / n)
+      }
+    });
+    return {
+      w: gw,
+      h: gh,
+      a: a,
+      stride: 1,
+      off: 0,
+      scale: 1
+    }
+  }
+
+  // Bilinear lookup in a grid {w,h,a,stride,off,scale} at source fractions (u,v).
+  function sampleGrid(g, u, v) {
+    var x = u * g.w - .5,
+      y = v * g.h - .5;
+    x = x < 0 ? 0 : x > g.w - 1 ? g.w - 1 : x;
+    y = y < 0 ? 0 : y > g.h - 1 ? g.h - 1 : y;
+    var ix = Math.min(g.w - 2, x | 0),
+      iy = Math.min(g.h - 2, y | 0),
+      fx = x - ix,
+      fy = y - iy,
+      a = g.a,
+      S = g.stride,
+      o = g.off,
+      i = iy * g.w + ix;
+    if (ix < 0) {
+      ix = 0;
+      fx = 0
+    }
+    return ((a[i * S + o] * (1 - fx) + a[(i + 1) * S + o] * fx) * (1 - fy) + (a[(i + g.w) * S + o] * (1 - fx) + a[(i + g.w + 1) * S + o] * fx) * fy) * g.scale
+  }
+
+  // Mask strength (0-1) for every output pixel.
+  function maskAlpha(mk, G, sw, sh, aux) {
+    var ow = G.w,
+      oh = G.h,
+      A = G.m,
+      out = new Float32Array(ow * oh),
+      t = mk.type,
+      grid = null;
+    if (t === 'brush') grid = brushGrid(mk.strokes || [], sw / sh);
+    else if (t === 'subject' || t === 'background' || t === 'face') {
+      var sg = aux && aux.seg;
+      if (!sg) return null;
+      grid = {
+        w: sg.w,
+        h: sg.h,
+        a: sg.d,
+        stride: 4,
+        off: t === 'face' ? 1 : 0,
+        scale: 1 / 255
+      }
+    }
+    var lx = (mk.x2 - mk.x1) * sw,
+      ly = (mk.y2 - mk.y1) * sh,
+      len2 = lx * lx + ly * ly || 1,
+      inner = 1 - (mk.feather == null ? .5 : mk.feather);
+    for (var y = 0; y < oh; y++)
+      for (var x = 0; x < ow; x++) {
+        var u = (A[0] * (x + .5) + A[2] * (y + .5) + A[4]) / sw,
+          v = (A[1] * (x + .5) + A[3] * (y + .5) + A[5]) / sh,
+          a;
+        if (t === 'linear') a = 1 - ss(0, 1, ((u - mk.x1) * sw * lx + (v - mk.y1) * sh * ly) / len2);
+        else if (t === 'radial') {
+          var dx = (u - mk.cx) / mk.rx,
+            dy = (v - mk.cy) / mk.ry,
+            d = Math.sqrt(dx * dx + dy * dy);
+          a = inner >= 1 ? (d < 1 ? 1 : 0) : 1 - ss(inner, 1, d)
+        } else a = sampleGrid(grid, u, v);
+        if (t === 'background') a = 1 - a;
+        if (mk.inv) a = 1 - a;
+        out[y * ow + x] = a * (mk.amt == null ? 1 : mk.amt)
+      }
+    return out
+  }
+
+  // Blur that only gathers colour from inside the mask, so a blurred background
+  // doesn't pick up a halo from the sharp subject in front of it.
+  function maskedBlur(m, al, r) {
+    var w = m.w,
+      h = m.h,
+      n = w * h,
+      d = m.d,
+      R = new Float32Array(n),
+      G = new Float32Array(n),
+      B = new Float32Array(n);
+    for (var p = 0, i = 0; p < n; p++, i += 4) {
+      var a = al[p];
+      R[p] = d[i] * a;
+      G[p] = d[i + 1] * a;
+      B[p] = d[i + 2] * a
+    }
+    R = blur1(R, w, h, r);
+    G = blur1(G, w, h, r);
+    B = blur1(B, w, h, r);
+    var W = blur1(al, w, h, r),
+      o = cp(m),
+      od = o.d;
+    for (p = 0, i = 0; p < n; p++, i += 4) {
+      if (W[p] < .02) continue;
+      od[i] = R[p] / W[p];
+      od[i + 1] = G[p] / W[p];
+      od[i + 2] = B[p] / W[p]
+    }
+    return o
+  }
+
+  function applyMasks(m, masks, src, g, aux) {
+    var G = geoMap(src.w, src.h, g);
+    // Preview renders can run on a smaller image than the geometry expects; scale to fit.
+    if (G.w !== m.w || G.h !== m.h) {
+      var kx = G.w / m.w,
+        ky = G.h / m.h,
+        M = G.m;
+      G = {
+        w: m.w,
+        h: m.h,
+        m: [M[0] * kx, M[1] * kx, M[2] * ky, M[3] * ky, M[4], M[5]]
+      }
+    }
+    masks.forEach(function(mk) {
+      if (mk.off) return;
+      var al = maskAlpha(mk, G, src.w, src.h, aux);
+      if (!al) return;
+      var v = mk.v || {},
+        c = v.blur > 0 ? maskedBlur(m, al, v.blur / 100 * Math.max(m.w, m.h) / 28) : cp(m);
+      adjust(c, v);
+      var d = m.d,
+        cd = c.d;
+      for (var p = 0, i = 0; p < al.length; p++, i += 4) {
+        var a = al[p];
+        if (a <= 0) continue;
+        d[i] += (cd[i] - d[i]) * a;
+        d[i + 1] += (cd[i + 1] - d[i + 1]) * a;
+        d[i + 2] += (cd[i + 2] - d[i + 2]) * a
+      }
+    });
+    return m
+  }
+
   // `cache` (optional, one per source image) keeps the geometry + enhance
   // result, which is the slowest part and rarely changes while dragging sliders.
-  function render(src, st, cache) {
+  function render(src, st, cache, aux) {
     var key = JSON.stringify([st.geo, st.enh, !!st.skin]),
       m, base;
     if (cache && cache.src === src && cache.key === key) {
@@ -1796,8 +1981,11 @@ function PIPE() {
     }
     for (var i = 0; i < st.layers.length; i++) {
       var Ly = st.layers[i];
-      if (Ly.t === 'adj') adjust(m, Ly.v);
-      else {
+      if (Ly.t === 'adj') {
+        adjust(m, Ly.v);
+        // Local (masked) edits sit on top of the base adjustments, under the filters.
+        if (i === 0 && st.masks && st.masks.length) applyMasks(m, st.masks, src, st.geo, aux)
+      } else {
         var f = FM[Ly.id];
         if (!f || Ly.s <= 0) continue;
         var pre = cp(m),
@@ -1813,6 +2001,8 @@ function PIPE() {
     geo: geo,
     geoMap: geoMap,
     render: render,
+    maskAlpha: maskAlpha,
+    brushGrid: brushGrid,
     upscale: upscale,
     upSize: upSize,
     curve: curve,

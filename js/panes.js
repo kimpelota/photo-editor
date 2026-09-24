@@ -322,6 +322,8 @@ function renderStack() {
   });
   var g = S.geo;
   if (g.crop || g.rect || g.ang || g.rot || g.fh || g.fv) li.push('<li><span>Crop / rotate</span><i>' + [g.rect ? 'custom' : g.crop, g.ang ? (g.ang > 0 ? '+' : '') + g.ang.toFixed(1) + '° level' : '', g.rot ? g.rot + '°' : '', g.fh ? 'flipH' : '', g.fv ? 'flipV' : ''].filter(Boolean).join(' ') + '</i><button data-g="1">&times;</button></li>');
+  var nm = masks().length;
+  if (nm) li.push('<li><span>Masks</span><i>' + nm + ' local edit' + (nm > 1 ? 's' : '') + '</i><button data-m="1">&times;</button></li>');
   if (S.up.on) li.push('<li><span>Upscale</span><i>' + S.up.f + '×</i><button data-u="1">&times;</button></li>');
   el.innerHTML = li.join('') || '<li style="color:var(--dim)"><span>No edits yet</span></li>';
   $('#stackN').textContent = li.length ? li.length + ' layer' + (li.length > 1 ? 's' : '') : '';
@@ -333,6 +335,7 @@ function renderStack() {
         thumbsDirty = presetDirty = true;
         refreshThumbs()
       } else if (b.dataset.u) S.up.on = false;
+      else if (b.dataset.m) S.masks = [];
       else {
         var i = +b.dataset.i;
         if (i === 0) S.layers[0].v = {};

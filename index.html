@@ -29,6 +29,7 @@
     <button class="tab" data-t="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="5.5"/><circle cx="15" cy="9" r="5.5"/><circle cx="12" cy="15" r="5.5"/></svg>Filters</button>
     <button class="tab" data-t="presets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="M17 13v8M13 17h8"/></svg>Presets</button>
     <button class="tab" data-t="adjust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Adjust</button>
+    <button class="tab" data-t="masks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 010 17z" fill="currentColor" stroke="none"/></svg>Masks</button>
     <button class="tab" data-t="crop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>Crop</button>
   </nav>
   <section class="stage" id="stage">
@@ -99,6 +100,25 @@
       <div class="save"><input id="pname" placeholder="Name your current settings&hellip;" maxlength="24"><button class="btn" id="bSave">Save</button></div>
       <div class="pgrid" id="mygrid"></div>
     </div>
+    <!-- MASKS -->
+    <div class="pane" data-p="masks">
+      <div class="ph"><h2>Masks</h2><p>Edit just part of the photo: brighten a face, blur the background, darken the sky.</p></div>
+      <div class="lbl">Add a mask</div>
+      <div class="madd" id="maskAdd">
+        <button data-m="subject"><i class="ai">AI</i>Subject</button>
+        <button data-m="background"><i class="ai">AI</i>Background</button>
+        <button data-m="face"><i class="ai">AI</i>Face</button>
+        <button data-m="brush">Brush</button>
+        <button data-m="linear">Linear gradient</button>
+        <button data-m="radial">Radial</button>
+      </div>
+      <div class="segst" id="segStatus" hidden></div>
+      <div class="tog">Show mask overlay <kbd>O</kbd> <button class="sw" id="ovSw" aria-label="Show mask overlay"></button></div>
+      <div class="empty" id="maskEmpty">No masks yet. AI masks find the subject, background or faces for you; the others you draw on the photo.</div>
+      <ul class="mlist" id="maskList"></ul>
+      <div id="maskEdit" hidden></div>
+      <div class="note"><b>AI masks</b> run on this computer. The first one downloads Google's MediaPipe models once (about 20 MB), then works offline.</div>
+    </div>
     <!-- CROP -->
     <div class="pane" data-p="crop">
       <div class="ph"><h2>Crop &amp; Straighten</h2><p>Drag the corners or edges to crop, drag inside the box to move it. Straighten levels a tilted horizon.</p></div>
@@ -146,6 +166,8 @@
 <script src="js/ai-pane.js"></script>
 <script src="js/curves.js"></script>
 <script src="js/crop.js"></script>
+<script src="js/segment.js"></script>
+<script src="js/masks.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

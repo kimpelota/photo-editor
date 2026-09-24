@@ -23,6 +23,7 @@ function fresh() {
       t: 'adj',
       v: {}
     }],
+    masks: [],
     skin: false,
     up: {
       on: false,
@@ -112,6 +113,9 @@ function upView() {
 
 function hasEdits(st) {
   var f = fresh();
+  if (st.masks && st.masks.some(function(m) {
+      return !m.off
+    })) return true;
   return JSON.stringify([st.geo.crop, st.enh, st.layers, st.skin]) !== JSON.stringify([null, null, f.layers, false]) && !(st.layers.length === 1 && !Object.keys(st.layers[0].v).some(function(k) {
     return st.layers[0].v[k]
   }) && !st.enh && !st.skin)
@@ -147,6 +151,7 @@ function setImage(src, w, h, name) {
   sendSrc('work', work);
   sendSrc('proxy', proxy);
   fileName = name;
+  resetSeg();
   $('#fname').textContent = name + '  ·  ' + w + '×' + h + (full.w < w ? '  (editing at ' + full.w + '×' + full.h + ')' : '');
   S = fresh();
   hist = [];

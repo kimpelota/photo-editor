@@ -14,6 +14,7 @@ $$('.tab').forEach(function(b) {
     if (tab === 'filters') renderFilterGrid();
     if (tab === 'adjust') drawCurve();
     if (tab === 'crop') syncCrop();
+    if (tab === 'masks') renderMasks();
     refreshThumbs();
     if (prev === 'crop' || tab === 'crop') schedule();
     if ((prev === 'enhance') !== (tab === 'enhance') && vstate().up.on) schedule();
@@ -51,6 +52,7 @@ function syncUI() {
     }
   });
   syncCurves();
+  if (tab === 'masks') renderMasks();
   updDims()
 }
 $('#bUndo').onclick = undo;
@@ -110,6 +112,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'b' || e.key === 'B') $('#bSplit').click();
   if (e.key === 'l' || e.key === 'L') $('#bLoupe').click();
   if (e.key === 'h' || e.key === 'H') $('#bHisto').click();
+  if ((e.key === 'o' || e.key === 'O') && tab === 'masks') $('#ovSw').click();
   if (e.key === 'Enter' && tab === 'crop') $('#bCropDone').click();
   if (e.key === 'Escape') $('#expM').classList.remove('on')
 });

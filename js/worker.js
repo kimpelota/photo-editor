@@ -6,7 +6,8 @@
 function WORKER_MAIN() {
   var P = PIPE(),
     S = {},
-    C = {};
+    C = {},
+    AUX = {};
   onmessage = function(e) {
     var q = e.data;
     try {
@@ -19,7 +20,15 @@ function WORKER_MAIN() {
         C[q.key] = {};
         return
       }
-      var m = P.render(S[q.key], q.st, q.cache === false ? null : C[q.key]);
+      if (q.type === 'seg') {
+        AUX.seg = q.buf ? {
+          w: q.w,
+          h: q.h,
+          d: new Uint8ClampedArray(q.buf)
+        } : null;
+        return
+      }
+      var m = P.render(S[q.key], q.st, q.cache === false ? null : C[q.key], AUX);
       if (q.up) m = P.upscale(m, q.st.up);
       postMessage({
         id: q.id,
@@ -41,7 +50,8 @@ var P = PIPE(),
   jobs = {},
   jobSeq = 0,
   SRC = {},
-  CACHE = {};
+  CACHE = {},
+  AUX = {};
 try {
   var wsrc = PIPE.toString() + ';(' + WORKER_MAIN.toString() + ')();';
   W = new Worker(URL.createObjectURL(new Blob([wsrc], {
@@ -78,12 +88,25 @@ function sendSrc(key, m) {
   })
 }
 
+// AI segmentation grid (RGBA: R = subject, G = face) in source-image space, or null.
+function sendSeg(g) {
+  AUX.seg = g;
+  if (W) W.postMessage(g ? {
+    type: 'seg',
+    w: g.w,
+    h: g.h,
+    buf: g.d.slice().buffer
+  } : {
+    type: 'seg'
+  })
+}
+
 function job(q) {
   return new Promise(function(res, rej) {
     if (!W) {
       setTimeout(function() {
         try {
-          var m = P.render(SRC[q.key], q.st, q.cache === false ? null : CACHE[q.key]);
+          var m = P.render(SRC[q.key], q.st, q.cache === false ? null : CACHE[q.key], AUX);
           if (q.up) m = P.upscale(m, q.st.up);
           res(m)
         } catch (e) {
