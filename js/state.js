@@ -349,8 +349,12 @@ function loadSample() {
   setImage(c, c.width, c.height, 'lakeside-sunset.png')
 }
 
+// Browsers sometimes report no type (or a generic one) for real photos, e.g.
+// files from cloud drives or cameras, so try to decode anything that isn't
+// clearly another kind of file.
 function loadFile(f) {
-  if (!f || !/^image\//.test(f.type)) {
+  if (!f) return;
+  if (f.type && !/^image\//.test(f.type) && f.type !== 'application/octet-stream') {
     toast('That file isn’t an image');
     return
   }
@@ -362,7 +366,7 @@ function loadFile(f) {
     toast('Loaded ' + f.name)
   };
   im.onerror = function() {
-    toast('Couldn’t read that image');
+    toast(/\.(raw|cr2|cr3|nef|arw|dng|orf|rw2|raf)$/i.test(f.name) ? 'Camera RAW files aren’t supported. Export a JPEG or HEIC first.' : 'Couldn’t read “' + f.name + '” as an image');
     URL.revokeObjectURL(url)
   };
   im.src = url
