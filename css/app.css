@@ -932,6 +932,54 @@ textarea::placeholder {
   border-color: #3a3f4c
 }
 
+.engine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600
+}
+
+.engine span {
+  display: flex;
+  align-items: center;
+  gap: 6px
+}
+
+.engine em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--dim)
+}
+
+.keyform {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 11px;
+  border: 1px solid var(--line2);
+  background: var(--card)
+}
+
+.keyform label {
+  display: block;
+  font-weight: 650;
+  margin-bottom: 6px
+}
+
+.keyform p {
+  color: var(--dim);
+  font-size: 11.5px;
+  margin-top: 8px
+}
+
+.planwhy {
+  color: #c3c7d1;
+  font-size: 12.5px;
+  margin: 2px 0 10px
+}
+
 .plh {
   display: flex;
   align-items: baseline;

@@ -74,17 +74,26 @@
     <!-- AI -->
     <div class="pane" data-p="ai">
       <div class="ph"><h2>AI Prompt Editor</h2><p>Describe the edit in plain English. Chain steps with &ldquo;then&rdquo;, set strength with &ldquo;slightly&rdquo; / &ldquo;a lot&rdquo; / &ldquo;30%&rdquo;, and say what to keep.</p></div>
+      <div class="engine"><span id="engine"></span><button class="btn ghost" id="bClaude">Connect Claude</button></div>
+      <div class="keyform" id="keyForm" hidden>
+        <label for="keyIn">Anthropic API key</label>
+        <div class="save"><input id="keyIn" type="password" placeholder="sk-ant-…" autocomplete="off"><button class="btn pri" id="keySave">Save</button></div>
+        <p>Stored only in this browser. Your prompt and a small copy of the photo go straight from this computer to Anthropic. Get a key at console.anthropic.com. Don&rsquo;t use a shared computer.</p>
+        <button class="btn ghost" id="keyForget" hidden>Remove key</button>
+      </div>
       <div class="pbox"><textarea id="prompt" rows="4" placeholder="e.g. make it warmer and a bit brighter, then add a vintage film look but keep the skin tones natural, and crop to square"></textarea>
-        <div class="prow"><span class="hint"><kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd></span><button class="btn pri" id="bRun">Understand &rarr;</button></div></div>
+        <div class="prow"><span class="hint"><kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd></span><button class="btn" id="bStop" hidden>Stop</button><button class="btn pri" id="bRun">Understand &rarr;</button></div></div>
       <div id="planBox" hidden>
         <div class="plh"><h3>What I understood</h3><span id="planSum"></span></div>
+        <p class="planwhy" id="planWhy" hidden></p>
         <ol class="steps" id="steps"></ol>
         <div id="cantBox"></div>
         <div class="row" style="margin-top:12px"><button class="btn pri" id="bApply">Apply edits</button><button class="btn" id="bDiscard">Discard</button></div>
       </div>
       <div class="lbl" style="margin-top:18px">Try one</div>
       <div class="ex" id="examples"></div>
-      <div class="note"><b>How it works:</b> a language parser that runs 100% on this computer, with no cloud and no account. It understands light, color, color ranges (sky, water, greenery, reds&hellip;), moods, 46 filters, crop, rotate, upscale and enhance. It <b>can&rsquo;t</b> add, remove or move objects, or retouch faces, and it tells you when you ask for that.</div>
+      <div class="note" id="aiNoteClaude" hidden><b>How it works:</b> Claude looks at your photo and your request, then plans the edits with this app&rsquo;s tools: sliders, colour ranges, curves, filters, crop and straighten, and AI masks for the subject, background or faces. Nothing changes until you press Apply, and you can tweak or remove any step first. It still can&rsquo;t add or remove objects.</div>
+      <div class="note" id="aiNote"><b>How it works:</b> a language parser that runs 100% on this computer, with no cloud and no account. It understands light, color, color ranges (sky, water, greenery, reds&hellip;), moods, 46 filters, crop, rotate, upscale and enhance. It <b>can&rsquo;t</b> add, remove or move objects, or retouch faces, and it tells you when you ask for that.</div>
     </div>
     <!-- FILTERS -->
     <div class="pane" data-p="filters">
@@ -170,6 +179,7 @@
 <script src="js/segment.js"></script>
 <script src="js/upscale-ai.js"></script>
 <script src="js/masks.js"></script>
+<script src="js/claude.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

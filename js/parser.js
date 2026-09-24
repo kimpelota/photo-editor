@@ -1160,7 +1160,40 @@ function applySteps(S0, steps) {
       case 'skin':
         st.skin = true;
         break;
+      // Steps below come from the Claude editor: absolute values rather than nudges.
+      case 'setv':
+        v = tgt();
+        if (s.v) v[s.key] = Math.max(NONNEG[s.key] ? 0 : -100, Math.min(100, Math.round(s.v)));
+        else delete v[s.key];
+        break;
+      case 'hslset':
+        v = tgt();
+        v.hsl = v.hsl || {};
+        var hv = {};
+        ['h', 's', 'l'].forEach(function(p) {
+          if (s[p]) hv[p] = Math.max(-100, Math.min(100, Math.round(s[p])))
+        });
+        if (Object.keys(hv).length) v.hsl[s.band] = hv;
+        else delete v.hsl[s.band];
+        break;
+      case 'curve':
+        v = tgt();
+        v.curve = v.curve || {};
+        v.curve[s.ch] = s.pts;
+        break;
+      case 'cropbox':
+        st.geo.rect = srcRectToFrame(s.rect, st.geo);
+        st.geo.crop = null;
+        st.geo.lock = 'free';
+        break;
+      case 'straighten':
+        st.geo.ang = Math.max(-45, Math.min(45, s.deg));
+        break;
+      case 'mask':
+        st.masks = (st.masks || []).concat([clone(s.mk)]);
+        break;
       case 'reset':
+        st.masks = [];
         var up = st.up;
         var f = fresh();
         st.geo = f.geo;

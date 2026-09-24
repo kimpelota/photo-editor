@@ -13,6 +13,12 @@ $$('#examples button').forEach(function(b) {
 });
 
 function stepInfo(s) {
+  var info = claudeStepInfo(s);
+  if (info) return info;
+  return stepInfoBase(s)
+}
+
+function stepInfoBase(s) {
   var cap = function(x) {
       return x.charAt(0).toUpperCase() + x.slice(1)
     },
@@ -173,10 +179,12 @@ function renderPlan() {
   });
   if (!R.steps.length) ol.innerHTML = '<li class="skip" style="list-style:none">No edits I can make from that. See below.</li>';
   $('#cantBox').innerHTML = R.cant.map(function(c) {
-    return '<div class="cant"><b>Can’t do this offline</b><q>' + esc(c.text) + '</q><p>' + esc(c.why) + '</p></div>'
+    return '<div class="cant"><b>' + (R.by === 'claude' ? 'Can’t do this here' : 'Can’t do this offline') + '</b><q>' + esc(c.text) + '</q><p>' + esc(c.why) + '</p></div>'
   }).join('') + R.skip.map(function(c) {
     return '<div class="skip">Skipped “' + esc(c.text) + '”. ' + esc(c.why) + '</div>'
   }).join('');
+  $('#planWhy').textContent = R.summary || '';
+  $('#planWhy').hidden = !R.summary;
   $('#planSum').textContent = R.steps.length + ' step' + (R.steps.length === 1 ? '' : 's') + (R.cant.length ? ' · ' + R.cant.length + ' can’t do' : '') + (R.skip.length ? ' · ' + R.skip.length + ' skipped' : '');
   $('#bApply').disabled = !R.steps.length
 }
@@ -196,6 +204,7 @@ function runPrompt() {
     return
   }
   if (!work) return;
+  if (claudeKey()) return runClaude(t);
   var R = parsePrompt(t);
   plan = {
     R: R,
