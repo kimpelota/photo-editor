@@ -229,6 +229,8 @@ $('#bApply').onclick = function() {
   var t = plan.text;
   S = plan.st;
   plan = null;
+  // The next filter picked should stack on top of the AI's look, not replace a filter it chose.
+  fPos = fCount();
   renderPlan();
   push('AI: ' + (t.length > 38 ? t.slice(0, 36) + '…' : t));
   thumbsDirty = presetDirty = true;
