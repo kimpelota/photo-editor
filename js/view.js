@@ -106,7 +106,8 @@ function layout() {
     ch = r.height,
     iw = afterC.width,
     ih = afterC.height,
-    fit = Math.min((cw - 60) / iw, (ch - 110) / ih),
+    sm = cw < 560, // phones: smaller margins so the photo gets more of the screen
+    fit = Math.min((cw - (sm ? 16 : 60)) / iw, (ch - (sm ? 60 : 110)) / ih),
     s = zoom === 'fit' ? fit : zoom;
   var dw = iw * s,
     dh = ih * s;
@@ -564,3 +565,8 @@ $('#bLoupe').onclick = function() {
   loupeOn = !loupeOn;
   this.classList.toggle('on', loupeOn)
 };
+
+// Redraw when the photo area changes size: window resizes, phone rotation, the mobile layout.
+if (window.ResizeObserver) new ResizeObserver(function() {
+  draw()
+}).observe(stage);

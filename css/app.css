@@ -215,7 +215,7 @@ button {
   display: grid;
   grid-template-rows: 54px 1fr;
   height: 100vh;
-  min-width: 980px
+  height: 100dvh
 }
 
 header {
@@ -2326,4 +2326,194 @@ i.ai {
 
 .thpop button.cur {
   outline: 1px solid var(--ac)
+}
+
+/* ---------- Get the app menu ---------- */
+.apppop {
+  width: 300px
+}
+
+.apppop button,
+.apppop .pbtn {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--tx);
+  text-decoration: none;
+  font-size: 12.5px
+}
+
+.apppop .pbtn:hover {
+  background: var(--sur2)
+}
+
+.apppop button:disabled {
+  opacity: .6;
+  cursor: default
+}
+
+.apppop span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px
+}
+
+.apppop b {
+  color: var(--tx);
+  font-weight: 600
+}
+
+.apppop small {
+  color: var(--mut);
+  font-size: 11px
+}
+
+.apphow {
+  margin: 0 10px 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(var(--ac-rgb), .12);
+  color: var(--tx);
+  font-size: 12px;
+  line-height: 1.5
+}
+
+/* ---------- Phones and narrow windows ----------
+   Photo on top, the open tool's panel under it, and the tool tabs along the bottom. */
+@media (max-width: 760px) {
+  .app {
+    grid-template-rows: auto 1fr
+  }
+
+  header {
+    gap: 6px;
+    padding: 8px 10px;
+    padding-top: calc(8px + env(safe-area-inset-top));
+    overflow-x: auto;
+    scrollbar-width: none
+  }
+
+  header::-webkit-scrollbar {
+    display: none
+  }
+
+  header > * {
+    flex-shrink: 0
+  }
+
+  .logo {
+    font-size: 0;
+    gap: 0
+  }
+
+  .logo span,
+  .sep,
+  .fname,
+  #bCopyE,
+  #bPasteE {
+    display: none
+  }
+
+  .grow {
+    flex: 1 0 4px
+  }
+
+  .btn {
+    padding-left: 10px;
+    padding-right: 10px
+  }
+
+  /* menus can't hang off the scrolling header, so pin them under it */
+  .pop {
+    position: fixed;
+    top: calc(58px + env(safe-area-inset-top));
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 60vh;
+    z-index: 40
+  }
+
+  main {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 46%) minmax(0, 1fr) auto;
+    grid-template-areas: "stage" "panel" "rail"
+  }
+
+  .stage {
+    grid-area: stage
+  }
+
+  .panel {
+    grid-area: panel;
+    border-left: 0;
+    border-top: 1px solid var(--line)
+  }
+
+  .pane {
+    padding: 14px 14px 24px
+  }
+
+  .rail {
+    grid-area: rail;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    gap: 2px;
+    scrollbar-width: none
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none
+  }
+
+  .tab {
+    flex: 0 0 64px;
+    padding: 7px 0 6px;
+    font-size: 10px
+  }
+
+  .tab.on::before {
+    left: 16px;
+    right: 16px;
+    top: -6px;
+    bottom: auto;
+    width: auto;
+    height: 3px
+  }
+
+  .zbar {
+    right: 8px;
+    bottom: 8px
+  }
+
+  .zbar [data-z="1"],
+  .zbar [data-z="2"],
+  .zbar .vs,
+  #bLoupe,
+  #bHisto,
+  .histo {
+    display: none !important
+  }
+
+  .upload {
+    inset: 10px
+  }
+
+  .mbox {
+    width: auto;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto
+  }
+
+  /* bigger targets for fingers */
+  .sl input {
+    min-height: 28px
+  }
 }
