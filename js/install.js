@@ -6,40 +6,56 @@ var SITE_URL = 'https://kimpelota.github.io/photo-editor/',
   installEv = null;
 
 function isInstalled() {
-  return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
+  return window.NUANCE_APP === true || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
 }
 
 function isIOS() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent) || navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
 }
 
-// What to tell people when the browser can't show its own install prompt.
-function installHow() {
-  if (isIOS()) return 'In Safari, tap the Share button, then <b>Add to Home Screen</b>.';
-  if (/android/i.test(navigator.userAgent)) return 'Open the browser menu (&#8942;) and tap <b>Install app</b> or <b>Add to Home screen</b>.';
-  if (/safari/i.test(navigator.userAgent) && !/chrome|chromium|edg/i.test(navigator.userAgent)) return 'In Safari, choose <b>File &rarr; Add to Dock</b>.';
-  return 'Use the install icon in the address bar, or the browser menu &rarr; <b>Install Studio de Nuance</b>. Chrome and Edge support this.'
+var MAC_URL = 'https://github.com/kimpelota/photo-editor/releases/latest/download/Studio-de-Nuance-mac.zip';
+
+function isMac() {
+  return /mac/i.test(navigator.platform) && !isIOS()
+}
+
+// Step-by-step install instructions for the browser and device this is running on.
+function installSteps() {
+  var ua = navigator.userAgent;
+  if (isIOS()) return ['Open this page in <b>Safari</b>.', 'Tap the <b>Share</b> button (the square with an arrow).', 'Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.'];
+  if (/android/i.test(ua)) return ['Open this page in <b>Chrome</b>.', 'Tap the menu (<b>&#8942;</b>) at the top right.', 'Tap <b>Install app</b> (or <b>Add to Home screen</b>), then <b>Install</b>.'];
+  if (/safari/i.test(ua) && !/chrome|chromium|edg/i.test(ua)) return ['In the menu bar at the very top of the screen, click <b>File</b>.', 'Click <b>Add to Dock&hellip;</b>, then <b>Add</b>.', 'Open it from the Dock or your Applications folder.'];
+  return ['Click the install icon at the right end of the address bar, or open the browser menu (<b>&#8942;</b>).', 'Choose <b>Install Studio de Nuance</b>, then <b>Install</b>.'];
+}
+
+function steps(list) {
+  return '<ol class="appsteps">' + list.map(function(x) {
+    return '<li>' + x + '</li>'
+  }).join('') + '</ol>'
 }
 
 function renderAppPop() {
-  var on = isInstalled();
-  $('#appPop').innerHTML =
-    '<button id="bInstall"' + (on ? ' disabled' : '') + '><span><b>' + (on ? 'Installed on this device' : 'Install on this device') + '</b><small>Opens like an app, full screen, and works offline</small></span></button>' +
-    '<p class="apphow" id="appHow" hidden></p>' +
-    '<a class="pbtn" href="' + ZIP_URL + '" download><span><b>Download the code (.zip)</b><small>Run it yourself: open index.html through any local web server</small></span></a>' +
-    '<a class="pbtn" href="' + SITE_URL + '" target="_blank" rel="noopener"><span><b>Open on your phone</b><small>' + SITE_URL.replace('https://', '') + '</small></span></a>';
-  $('#bInstall').onclick = function() {
-    if (installEv) {
-      installEv.prompt();
-      installEv.userChoice.then(function() {
-        installEv = null;
-        renderAppPop()
-      });
-      return
+  var h = '';
+  if (window.NUANCE_APP) h += '<div class="appsec"><b>You&rsquo;re using the Mac app</b><small>It works offline. Exports are saved to your Downloads folder.</small></div>';
+  else {
+    if (isMac()) h += '<a class="pbtn appmain" href="' + MAC_URL + '"><span><b>Download for Mac</b><small>A regular Mac app that works offline</small></span></a>' +
+      steps(['Open the downloaded <b>Studio-de-Nuance-mac.zip</b> to unzip it.', 'Drag <b>Studio de Nuance</b> into your <b>Applications</b> folder and open it.', 'If macOS says it can&rsquo;t check the app: open <b>System Settings &rarr; Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>. You only do this once.']);
+    if (isInstalled()) h += '<div class="appsec"><b>Installed on this device</b></div>';
+    else {
+      h += '<div class="appsec"><b>' + (isMac() ? 'Or install it from this browser' : 'Install on this device') + '</b><small>Opens like an app, full screen, and works offline.</small></div>';
+      if (installEv) h += '<button class="pbtn appmain" id="bInstall"><span><b>Install now</b></span></button>';
+      else h += steps(installSteps())
     }
-    var h = $('#appHow');
-    h.innerHTML = installHow();
-    h.hidden = false
+  }
+  h += '<div class="appsec"><b>On your phone</b><small>Open <a href="' + SITE_URL + '" target="_blank" rel="noopener">' + SITE_URL.replace('https://', '') + '</a> and follow the install steps there.</small></div>' +
+    '<a class="pbtn" href="' + ZIP_URL + '"><span><b>Download the code (.zip)</b><small>To run or change it yourself; see the README inside</small></span></a>';
+  $('#appPop').innerHTML = h;
+  if ($('#bInstall')) $('#bInstall').onclick = function() {
+    installEv.prompt();
+    installEv.userChoice.then(function() {
+      installEv = null;
+      renderAppPop()
+    })
   }
 }
 
@@ -63,6 +79,6 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('#appPop') && !e.target.closest('#bApp')) $('#appPop').classList.remove('on')
 });
 
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(function(e) {
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function(e) {
   console.warn('offline support unavailable', e)
 });

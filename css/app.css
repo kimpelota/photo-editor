@@ -2330,7 +2330,8 @@ i.ai {
 
 /* ---------- Get the app menu ---------- */
 .apppop {
-  width: 300px
+  width: 330px;
+  max-height: 80vh
 }
 
 .apppop button,
@@ -2370,14 +2371,49 @@ i.ai {
   font-size: 11px
 }
 
-.apphow {
-  margin: 0 10px 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(var(--ac-rgb), .12);
+.apppop .appmain {
+  background: var(--ac);
+  margin: 4px 0
+}
+
+.apppop .appmain b,
+.apppop .appmain small {
+  color: var(--on-ac)
+}
+
+.apppop .appmain:hover {
+  background: var(--ac);
+  filter: brightness(1.1)
+}
+
+.appsec {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 10px 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  font-size: 12.5px
+}
+
+.appsec:first-child {
+  border-top: 0;
+  margin-top: 0
+}
+
+.appsec a {
+  color: var(--ac)
+}
+
+.appsteps {
+  margin: 4px 10px 8px 28px;
   color: var(--tx);
   font-size: 12px;
   line-height: 1.5
+}
+
+.appsteps li {
+  margin: 3px 0
 }
 
 /* ---------- Phones and narrow windows ----------

@@ -4,7 +4,17 @@ A photo editor that runs in your browser: filters, adjustments, masks (including
 
 **Use it:** https://kimpelota.github.io/photo-editor/
 
-## Install it as an app
+## Mac app
+
+[Download for Mac](https://github.com/kimpelota/photo-editor/releases/latest/download/Studio-de-Nuance-mac.zip). It runs on Apple-silicon and Intel Macs with macOS 12 or later.
+
+1. Open the downloaded zip to unzip it.
+2. Drag **Studio de Nuance** into your **Applications** folder and open it.
+3. The app isn't from the App Store, so the first time macOS may say it can't check it. Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+
+To build it yourself: `./mac/build.sh` (needs Apple's command line tools). The app is written to `dist/`.
+
+## Install it from the browser
 
 - **iPhone / iPad:** open the link in Safari, tap Share, then **Add to Home Screen**.
 - **Android:** open the link in Chrome, then menu (⋮) → **Install app**.
