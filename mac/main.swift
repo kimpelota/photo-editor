@@ -30,7 +30,7 @@ final class Files: NSObject, WKURLSchemeHandler {
   func webView(_ w: WKWebView, stop task: WKURLSchemeTask) {}
 }
 
-final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate {
+final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate, WKScriptMessageHandler {
   var window: NSWindow!
   var web: WKWebView!
   let files = Files()
@@ -41,6 +41,7 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
     // Lets the page know it's running as the installed app.
     cfg.userContentController.addUserScript(WKUserScript(
       source: "window.NUANCE_APP = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+    cfg.userContentController.add(self, name: "nuance")
     web = WKWebView(frame: .zero, configuration: cfg)
     web.uiDelegate = self
     web.navigationDelegate = self
@@ -93,6 +94,23 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
 
   @objc func reload() { web.reload() }
 
+  // The page sends {icon: "data:image/png;base64,..."} whenever the theme changes.
+  // It becomes the Dock icon now, and the app's icon in Finder (and the Dock when closed).
+  var iconKey = ""
+  func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
+    guard let body = m.body as? [String: Any], let s = body["icon"] as? String,
+          let comma = s.firstIndex(of: ","), let data = Data(base64Encoded: String(s[s.index(after: comma)...])),
+          let img = NSImage(data: data) else { return }
+    NSApp.applicationIconImage = img
+    let key = String(data.hashValue)
+    if key == iconKey { return }
+    iconKey = key
+    let path = Bundle.main.bundlePath
+    DispatchQueue.global(qos: .utility).async {
+      _ = NSWorkspace.shared.setIcon(img, forFile: path, options: [])
+    }
+  }
+
   // "Open photo": the file picker.
   func webView(_ w: WKWebView, runOpenPanelWith p: WKOpenPanelParameters, initiatedByFrame f: WKFrameInfo,
                completionHandler done: @escaping ([URL]?) -> Void) {
@@ -134,7 +152,12 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
               DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 w.evaluateJavaScript("[afterC.width + 'x' + afterC.height, S.masks.map(function(m){return m.type}).join(','), document.querySelector('#busy').className].join(' | ')") { r, e in
                   print("SELFTEST photo", r ?? "nil", e.map { "\($0)" } ?? "")
-                  NSApp.terminate(nil)
+                  // draw the icon in every theme (then put the theme back)
+                  let icons = "(function(){var was=themeNow(),o=THEMES.map(function(t){setTheme(t[0]);return drawThemeIcon(256,true).toDataURL()});setTheme(was);return JSON.stringify(o)})()"
+                  w.evaluateJavaScript(icons) { r, e in
+                    print("SELFTEST icons", r ?? "nil", e.map { "\($0)" } ?? "")
+                    NSApp.terminate(nil)
+                  }
                 }
               }
             }
