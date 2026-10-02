@@ -251,7 +251,7 @@ var CROP_TOOL = {
     var b = cropScreen(R),
       dpr = 1;
     x.save();
-    x.fillStyle = 'rgba(6,7,10,.62)';
+    x.fillStyle = 'rgba(5,5,5,.62)';
     x.beginPath();
     x.rect(R.x, R.y, R.w, R.h);
     x.rect(b.x, b.y, b.w, b.h);

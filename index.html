@@ -3,21 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lumen Studio</title>
-<link rel="stylesheet" href="css/app.css">
+<title>Studio de Nuance</title>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('nuance.theme')||'noir'}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Caveat:wght@400;700&family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Lobster&family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&family=Oswald:wght@400;700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,400;0,700;1,400;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap">
+<link rel="stylesheet" href="css/app.css?v=11">
 </head>
 <body>
 <div class="app">
 <header>
-  <a class="back" href="./students.html">&larr; Student experiences</a>
-  <div class="logo"><i></i>Lumen<span>Studio</span></div>
+  <div class="logo"><i></i>Studio de<span>Nuance</span></div>
   <div class="sep"></div>
   <button class="btn" id="bOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>Open photo</button>
   <button class="btn ghost" id="bSample">Sample</button>
   <div class="fname" id="fname"></div>
   <div class="grow"></div>
+  <button class="btn ghost" id="bCopyE" title="Copy this photo’s edits">Copy edits</button>
+  <button class="btn ghost" id="bPasteE" title="Paste copied edits onto this photo">Paste edits</button>
   <button class="ibtn" id="bUndo" title="Undo (Ctrl/Cmd+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg></button>
   <button class="ibtn" id="bRedo" title="Redo (Shift+Ctrl/Cmd+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
+  <div class="hwrap"><button class="btn ghost" id="bTheme" title="Color scheme"><i class="thdot"></i>Theme</button><div class="pop thpop" id="themePop"></div></div>
   <div class="hwrap"><button class="btn ghost" id="bHist">History</button><div class="pop" id="histPop"></div></div>
   <button class="btn pri" id="bExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg>Export</button>
   <input type="file" id="file" accept="image/*" hidden>
@@ -27,9 +33,13 @@
     <button class="tab on" data-t="enhance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><path d="M14 4h6v6M20 4l-7 7M4 14v6h6"/><path d="M17 15l.9 2.1L20 18l-2.1.9L17 21l-.9-2.1L14 18l2.1-.9z"/></svg>Upscale</button>
     <button class="tab" data-t="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M19 14l.8 2.2 2.2.8-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></svg>AI Editor</button>
     <button class="tab" data-t="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="5.5"/><circle cx="15" cy="9" r="5.5"/><circle cx="12" cy="15" r="5.5"/></svg>Filters</button>
+    <button class="tab" data-t="overlays"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 012 2v12"/><path d="M6 17l3-3 2 2 3-4 3 5"/></svg>Overlays</button>
+    <button class="tab" data-t="text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4.5h14V6M12 4.5v15M9 19.5h6"/></svg>Text</button>
     <button class="tab" data-t="presets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="M17 13v8M13 17h8"/></svg>Presets</button>
     <button class="tab" data-t="adjust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Adjust</button>
     <button class="tab" data-t="masks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 010 17z" fill="currentColor" stroke="none"/></svg>Masks</button>
+    <button class="tab" data-t="templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"/><rect x="8.5" y="6" width="7" height="7" rx="1"/><path d="M8.5 16h7M8.5 18.5h4"/></svg>Stories</button>
+    <button class="tab" data-t="feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="9.5" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="16" y="9.5" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><rect x="9.5" y="16" width="5" height="5" rx="1"/></svg>Feed</button>
     <button class="tab" data-t="crop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>Crop</button>
   </nav>
   <section class="stage" id="stage">
@@ -40,13 +50,16 @@
     <div class="dims" id="dims"></div>
     <canvas id="histC" class="histo" width="200" height="80" title="Histogram (H)"></canvas>
     <div class="zbar">
-      <button data-z="fit" class="on">Fit</button><button data-z="1">100%</button><button data-z="2">200%</button><span id="zl">100%</span>
+      <button class="zstep" id="zOut" title="Zoom out (−)" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></button><button class="zl" id="zl" title="Zoom level. Click to fit the photo (0)">100%</button><button class="zstep" id="zIn" title="Zoom in (+)" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12M12 6v12"/></svg></button>
+      <span class="vs"></span>
+      <button data-z="fit" class="on" title="Fit the whole photo (0)">Fit</button><button data-z="1" title="Actual size (1)">100%</button><button data-z="2" title="Zoom to 200% (2)">200%</button>
       <span class="vs"></span>
       <button id="bSplit" class="on" title="Before/after split (B)">Split</button>
       <button id="bLoupe" class="on" title="Zoom loupe (L)">Loupe</button>
       <button id="bHisto" class="on" title="Histogram (H)">Histogram</button>
     </div>
     <div class="drop" id="drop">Drop a photo to start editing</div>
+    <button class="upload" id="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg><b>Click Here to Upload</b><span>or drop a photo anywhere</span></button>
   </section>
   <aside class="panel" id="panel">
     <!-- ENHANCE / UPSCALE -->
@@ -69,7 +82,7 @@
         <p>Reads your photo and fixes it: auto levels, white balance, exposure, local contrast (clarity), vibrance and sharpening.</p>
         <div id="enhBox"></div>
       </div>
-      <div class="tip">Drag the white handle to compare &middot; scroll to zoom &middot; drag to pan when zoomed &middot; double-click to fit &middot; <kbd>B</kbd> split &middot; <kbd>L</kbd> loupe</div>
+      <div class="tip">Drag the white handle to compare &middot; pinch, scroll or <kbd>+</kbd>/<kbd>&minus;</kbd> to zoom &middot; drag or two-finger scroll to move around &middot; double-click to zoom in or back out &middot; <kbd>0</kbd> fit &middot; <kbd>B</kbd> split &middot; <kbd>L</kbd> loupe</div>
     </div>
     <!-- AI -->
     <div class="pane" data-p="ai">
@@ -93,14 +106,72 @@
       <div class="lbl" style="margin-top:18px">Try one</div>
       <div class="ex" id="examples"></div>
       <div class="note" id="aiNoteClaude" hidden><b>How it works:</b> Claude looks at your photo and your request, then plans the edits with this app&rsquo;s tools: sliders, colour ranges, curves, filters, crop and straighten, and AI masks for the subject, background or faces. Nothing changes until you press Apply, and you can tweak or remove any step first. It still can&rsquo;t add or remove objects.</div>
-      <div class="note" id="aiNote"><b>How it works:</b> a language parser that runs 100% on this computer, with no cloud and no account. It understands light, color, color ranges (sky, water, greenery, reds&hellip;), moods, 46 filters, crop, rotate, upscale and enhance. It <b>can&rsquo;t</b> add, remove or move objects, or retouch faces, and it tells you when you ask for that.</div>
+      <div class="note" id="aiNote"><b>How it works:</b> a language parser that runs 100% on this computer, with no cloud and no account. It understands light, color, color ranges (sky, water, greenery, reds&hellip;), moods, 76 filters, color grading, crop, straighten, rotate, upscale and enhance. It also copes with harder requests: typos, problems to fix (&ldquo;it&rsquo;s too yellow&rdquo;), exceptions (&ldquo;everything except the face&rdquo;), things to leave alone (&ldquo;don&rsquo;t make it darker&rdquo;), eras and film looks (&ldquo;like a 90s disposable&rdquo;) and the kind of photo (&ldquo;this is a food shot&rdquo;). It <b>can&rsquo;t</b> add, remove or move objects, and it tells you when you ask for that.</div>
     </div>
     <!-- FILTERS -->
     <div class="pane" data-p="filters">
-      <div class="ph"><h2>Filters</h2><p>46 looks, each built differently: film emulation, tone curves, halation, halftone dots, painterly smoothing and more.</p></div>
+      <div class="ph"><h2>Filters</h2><p>76 looks, each built differently: film emulation, tone curves, halation, halftone dots, painterly smoothing, tape and print simulation, and more.</p></div>
       <div class="fsel" id="fsel"></div>
       <div class="cats" id="cats"></div>
       <div class="fgrid" id="fgrid"></div>
+    </div>
+    <!-- OVERLAYS -->
+    <div class="pane" data-p="overlays">
+      <div class="ph"><h2>Overlays &amp; Frames</h2><p>Paper, dust, light leaks, shadows and more, layered on top of your edit. Stack as many as you like.</p></div>
+      <div class="lbl">Overlays</div>
+      <div class="fgrid" id="ovGrid"></div>
+      <div class="sec">On this photo</div>
+      <div class="empty" id="ovEmpty">No overlays yet. Tap one above to add it.</div>
+      <ul class="ovlist" id="ovList"></ul>
+      <div class="lbl" style="margin-top:18px">Retro frames</div>
+      <div class="fgrid" id="frGrid"></div>
+    </div>
+    <!-- TEXT -->
+    <div class="pane" data-p="text">
+      <div class="ph"><h2>Text</h2><p>Add words to your photo. Drag text to move it, pull a corner to resize it, and use the round handle to rotate it.</p></div>
+      <div class="txadds" id="txAdd"></div>
+      <div class="lbl">Text styles</div>
+      <div class="txstyles" id="txStyles"></div>
+      <div class="empty" id="txHint">Pick a style above, or click text on the photo to edit it.</div>
+      <div id="txEdit" hidden>
+        <div class="lbl">Text</div>
+        <textarea id="txS" rows="2" class="txarea" placeholder="Type here"></textarea>
+        <div class="row txrow"><select id="txFont" title="Font"></select><button class="tb" id="txB" title="Bold"><b>B</b></button><button class="tb" id="txI" title="Italic"><i>I</i></button><button class="tb" id="txU" title="All caps">AA</button></div>
+        <div class="seg" id="txAl" style="margin-top:8px"><button data-v="left">Left</button><button data-v="center">Center</button><button data-v="right">Right</button></div>
+        <div class="lbl">Color</div>
+        <div class="swatches" id="txSw"></div>
+        <div class="lbl">Effect</div>
+        <div class="chips" id="txFx"></div>
+        <div id="txC2Row"><div class="lbl">Effect color</div><div class="swatches" id="txSw2"></div></div>
+        <div id="txSliders" style="margin-top:10px"></div>
+        <div class="row" style="margin-top:8px"><button class="btn" id="txDup">Duplicate</button><button class="btn" id="txCenter">Center</button></div>
+        <div class="row" style="margin-top:6px"><button class="btn" id="txDown">Send back</button><button class="btn" id="txUp">Bring forward</button></div>
+        <button class="btn" id="txDel" style="width:100%;margin-top:6px">Delete text</button>
+      </div>
+      <div class="sec" id="txListH" hidden>Text on this photo</div>
+      <ul class="txlist" id="txList"></ul>
+      <div class="tip">Double-click text on the photo to type &middot; arrow keys nudge it (<kbd>Shift</kbd> for bigger steps) &middot; <kbd>Delete</kbd> removes it &middot; a red line shows when it&rsquo;s centered</div>
+    </div>
+    <!-- TEMPLATES -->
+    <div class="pane" data-p="templates">
+      <div class="ph"><h2>Story Templates</h2><p>Drop your edited photo into a 1080&times;1920 Instagram Story design, add your words, and download it.</p></div>
+      <div class="tgrid" id="tGrid"></div>
+      <div class="lbl">Title</div>
+      <div class="save"><input id="tTitle" maxlength="40" value="Golden Days"></div>
+      <div class="lbl" style="margin-top:10px">Subtitle</div>
+      <div class="save"><input id="tSub" maxlength="70" value="summer notes · vol. 01"></div>
+      <canvas id="tPrev" class="tprev" width="270" height="480"></canvas>
+      <button class="btn pri" style="width:100%;margin-top:12px" id="tDl">Download story</button>
+    </div>
+    <!-- FEED -->
+    <div class="pane" data-p="feed">
+      <div class="ph"><h2>Feed Planner</h2><p>Preview your Instagram grid before you post. Drag to reorder. Saved on this computer.</p></div>
+      <div class="row"><select id="fdAcc"></select><button class="btn" id="fdNewAcc" style="flex:0 0 auto">New account</button></div>
+      <div class="seg" id="fdShape" style="margin-top:10px"><button data-v="34">3:4 grid</button><button data-v="11">1:1 grid</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn pri" id="fdAddCur">Add this edit</button><button class="btn" id="fdAddFiles">Add photos&hellip;</button></div>
+      <input type="file" id="fdFile" accept="image/*" multiple hidden>
+      <div class="feedgrid" id="fdGrid"></div>
+      <div class="tip">Newest posts go top-left, like on Instagram. Hover a tile to remove it.</div>
     </div>
     <!-- PRESETS -->
     <div class="pane" data-p="presets">
@@ -121,6 +192,7 @@
         <button data-m="brush">Brush</button>
         <button data-m="linear">Linear gradient</button>
         <button data-m="radial">Radial</button>
+        <button data-m="window">B&amp;W Window</button>
       </div>
       <div class="segst" id="segStatus" hidden></div>
       <div class="tog">Show mask overlay <kbd>O</kbd> <button class="sw" id="ovSw" aria-label="Show mask overlay"></button></div>
@@ -165,21 +237,25 @@
   <div class="lbl">Size</div><div class="seg" id="exS"><button data-v="1">Original</button><button data-v="2">2&times;</button><button data-v="4">4&times;</button></div>
   <div class="res" id="exInfo"></div>
   <div class="row" style="margin-top:14px"><button class="btn" id="exCancel">Cancel</button><button class="btn pri" id="exGo">Download</button></div>
+  <div class="batch"><b>Batch export</b><p>Apply these edits to other photos and download them all, in the format and size above. AI subject, background and face masks are skipped.</p><button class="btn" id="exBatch">Choose photos&hellip;</button><input type="file" id="batchFile" accept="image/*" multiple hidden></div>
 </div></div>
 
-<script src="js/pipeline.js"></script>
-<script src="js/worker.js"></script>
-<script src="js/state.js"></script>
-<script src="js/view.js"></script>
-<script src="js/panes.js"></script>
-<script src="js/parser.js"></script>
-<script src="js/ai-pane.js"></script>
-<script src="js/curves.js"></script>
-<script src="js/crop.js"></script>
-<script src="js/segment.js"></script>
-<script src="js/upscale-ai.js"></script>
-<script src="js/masks.js"></script>
-<script src="js/claude.js"></script>
-<script src="js/main.js"></script>
+<script src="js/pipeline.js?v=12"></script>
+<script src="js/worker.js?v=12"></script>
+<script src="js/state.js?v=12"></script>
+<script src="js/view.js?v=12"></script>
+<script src="js/panes.js?v=12"></script>
+<script src="js/parser.js?v=12"></script>
+<script src="js/ai-pane.js?v=12"></script>
+<script src="js/curves.js?v=12"></script>
+<script src="js/crop.js?v=12"></script>
+<script src="js/segment.js?v=12"></script>
+<script src="js/upscale-ai.js?v=12"></script>
+<script src="js/masks.js?v=12"></script>
+<script src="js/claude.js?v=12"></script>
+<script src="js/main.js?v=12"></script>
+<script src="js/pro.js?v=12"></script>
+<script src="js/text.js?v=12"></script>
+<script src="js/theme.js?v=12"></script>
 </body>
 </html>

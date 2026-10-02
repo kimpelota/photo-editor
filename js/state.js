@@ -24,6 +24,10 @@ function fresh() {
       v: {}
     }],
     masks: [],
+    fx: {
+      ov: [],
+      fr: null
+    },
     skin: false,
     up: {
       on: false,
@@ -33,6 +37,11 @@ function fresh() {
       k: 'ai-medium'
     }
   }
+}
+
+// Current theme colour, e.g. cssv('--ac'), for things drawn on canvases.
+function cssv(n) {
+  return getComputedStyle(document.documentElement).getPropertyValue(n).trim()
 }
 
 function clone(o) {
@@ -116,6 +125,7 @@ function hasEdits(st) {
   if (st.masks && st.masks.some(function(m) {
       return !m.off
     })) return true;
+  if (st.fx && ((st.fx.ov || []).length || st.fx.fr)) return true;
   return JSON.stringify([st.geo.crop, st.enh, st.layers, st.skin]) !== JSON.stringify([null, null, f.layers, false]) && !(st.layers.length === 1 && !Object.keys(st.layers[0].v).some(function(k) {
     return st.layers[0].v[k]
   }) && !st.enh && !st.skin)
@@ -151,6 +161,7 @@ function setImage(src, w, h, name) {
   sendSrc('work', work);
   sendSrc('proxy', proxy);
   fileName = name;
+  $('#upload').hidden = true;
   resetSeg();
   $('#fname').textContent = name + '  ·  ' + w + '×' + h + (full.w < w ? '  (editing at ' + full.w + '×' + full.h + ')' : '');
   S = fresh();

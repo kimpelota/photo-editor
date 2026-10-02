@@ -1,15 +1,32 @@
 :root {
-  --bg: #0a0b0e;
-  --bg2: #101217;
-  --panel: #13151b;
-  --card: #191c24;
-  --line: #23262f;
-  --line2: #2e323d;
-  --tx: #eceef3;
-  --mut: #9095a4;
-  --dim: #626776;
-  --ac: #ff6b3d;
-  --ac2: #ffb03d;
+  --bg: #000000;
+  --bg2: #000000;
+  --panel: #070707;
+  --card: #111111;
+  --line: #2a0a0d;
+  --line2: #4a1015;
+  --tx: #f2f2f2;
+  --mut: #a3a3a3;
+  --dim: #6e6e6e;
+  --ac: #e5202e;
+  --ac-rgb: 229, 32, 46;
+  --ac2: #ff4d57;
+  --ac2-rgb: 255, 77, 87;
+  --ac-hi: #ff3b45;
+  --ac-lo: #9e0f1a;
+  --on-ac: #ffffff;
+  --inp: #0f0f0f;
+  --sur1: #191919;
+  --sur2: #252525;
+  --sur3: #2e2e2e;
+  --sur4: #454545;
+  --tx2: #c7c7c7;
+  --glass-rgb: 11, 11, 11;
+  --sheen: rgba(255, 255, 255, .035);
+  --hero: #1c0709;
+  --hero-line: #4a1015;
+  --note-bg: #1b0c0d;
+  --note-line: #4a1015;
   --ok: #9be36a;
   --bad: #ff5a6e;
   --blue: #6aa8ff;
@@ -17,6 +34,152 @@
   --disp: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
 }
+
+:root[data-theme="champagne"] {
+  --bg: #0e0d0b;
+  --bg2: #0b0a08;
+  --panel: #151310;
+  --card: #1f1c18;
+  --line: #2a2620;
+  --line2: #3a342b;
+  --tx: #f4efe6;
+  --mut: #a59d90;
+  --dim: #6f685e;
+  --ac: #c9a96e;
+  --ac-rgb: 201, 169, 110;
+  --ac2: #e2c58f;
+  --ac2-rgb: 226, 197, 143;
+  --ac-hi: #d8ba82;
+  --ac-lo: #8a6f3e;
+  --on-ac: #1a1610;
+  --inp: #12100d;
+  --sur1: #1c1915;
+  --sur2: #25211b;
+  --sur3: #302b23;
+  --sur4: #4a4236;
+  --tx2: #d6cfc2;
+  --glass-rgb: 20, 18, 15;
+  --sheen: rgba(255, 240, 210, .03);
+  --hero: #221c12;
+  --hero-line: #3a3022;
+  --note-bg: #1d1810;
+  --note-line: #4a3a1a;
+  --ok: #a8d88a;
+  --bad: #e98a7a;
+  --blue: #8fb3e8
+}
+
+:root[data-theme="bordeaux"] {
+  --bg: #14080c;
+  --bg2: #11060a;
+  --panel: #1b0b11;
+  --card: #261019;
+  --line: #3a1724;
+  --line2: #532236;
+  --tx: #f7ecef;
+  --mut: #c09aa6;
+  --dim: #85606c;
+  --ac: #e8a0b4;
+  --ac-rgb: 232, 160, 180;
+  --ac2: #f3c1cf;
+  --ac2-rgb: 243, 193, 207;
+  --ac-hi: #f0b3c4;
+  --ac-lo: #b3264f;
+  --on-ac: #2a0b16;
+  --inp: #1a0a10;
+  --sur1: #221016;
+  --sur2: #2c141d;
+  --sur3: #3a1a27;
+  --sur4: #5a2a3c;
+  --tx2: #e3c9d0;
+  --glass-rgb: 26, 10, 16;
+  --sheen: rgba(255, 220, 230, .03);
+  --hero: #2a0f1a;
+  --hero-line: #532236;
+  --note-bg: #261019;
+  --note-line: #532236;
+  --ok: #a6e3a1;
+  --bad: #ff8a9c;
+  --blue: #9db8ff
+}
+
+:root[data-theme="atelier"] {
+  --bg: #f6f2ec;
+  --bg2: #efe9e0;
+  --panel: #fbf9f5;
+  --card: #ffffff;
+  --line: #e4ddd2;
+  --line2: #d3c9ba;
+  --tx: #1c1b19;
+  --mut: #6b645a;
+  --dim: #9a9286;
+  --ac: #c2532d;
+  --ac-rgb: 194, 83, 45;
+  --ac2: #a8431f;
+  --ac2-rgb: 168, 67, 31;
+  --ac-hi: #d0623a;
+  --ac-lo: #8f3a1d;
+  --on-ac: #ffffff;
+  --inp: #ffffff;
+  --sur1: #f1ece4;
+  --sur2: #e9e2d7;
+  --sur3: #ddd4c6;
+  --sur4: #c4b8a6;
+  --tx2: #3a3630;
+  --glass-rgb: 251, 249, 245;
+  --sheen: rgba(0, 0, 0, .035);
+  --hero: #fff4ec;
+  --hero-line: #ecc9b8;
+  --note-bg: #fbf1e4;
+  --note-line: #e8cfae;
+  --ok: #3a8f2a;
+  --bad: #c4314b;
+  --blue: #2f6fd6
+}
+
+:root[data-theme="nuit"] {
+  --bg: #0b1020;
+  --bg2: #0a0f1d;
+  --panel: #0f1628;
+  --card: #161f36;
+  --line: #1f2a45;
+  --line2: #2c3a5c;
+  --tx: #eef1f8;
+  --mut: #9aa5bf;
+  --dim: #616c88;
+  --ac: #ff8a65;
+  --ac-rgb: 255, 138, 101;
+  --ac2: #ffb199;
+  --ac2-rgb: 255, 177, 153;
+  --ac-hi: #ff9c7c;
+  --ac-lo: #d0603e;
+  --on-ac: #1a0d08;
+  --inp: #0d1324;
+  --sur1: #141c31;
+  --sur2: #1b2540;
+  --sur3: #24304f;
+  --sur4: #3a4870;
+  --tx2: #c9d1e3;
+  --glass-rgb: 11, 16, 32;
+  --sheen: rgba(200, 220, 255, .03);
+  --hero: #1f1a2a;
+  --hero-line: #3a2f3f;
+  --note-bg: #1a1a26;
+  --note-line: #3a3348;
+  --ok: #9be3a0;
+  --bad: #ff7a8a;
+  --blue: #7fb0ff
+}
+
+/* light theme: the photo stage stays a neutral grey so colours read true */
+:root[data-theme="atelier"] .stage {
+  background: #e7e2da
+}
+
+:root[data-theme="atelier"] .tab.on {
+  background: rgba(var(--ac-rgb), .12)
+}
+
 
 * {
   box-sizing: border-box;
@@ -60,22 +223,10 @@ header {
   align-items: center;
   gap: 10px;
   padding: 0 14px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--ac);
   background: var(--bg2);
   position: relative;
   z-index: 5
-}
-
-.back {
-  color: var(--dim);
-  text-decoration: none;
-  font-size: 12px;
-  margin-right: 4px;
-  white-space: nowrap
-}
-
-.back:hover {
-  color: var(--tx)
 }
 
 .logo {
@@ -87,17 +238,25 @@ header {
 }
 
 .logo i {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 8px;
-  background: conic-gradient(from 210deg, #ff6b3d, #ffb03d, #ff3d7f, #7a5cff, #ff6b3d);
-  display: block;
-  box-shadow: 0 0 18px rgba(255, 107, 61, .35)
+  background: var(--ac);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 18px rgba(var(--ac-rgb), .5)
+}
+
+.logo i::before {
+  content: "N";
+  color: var(--on-ac);
+  font: 900 16px/1 var(--disp);
+  font-style: normal
 }
 
 .logo span {
-  color: var(--mut);
-  font-weight: 600
+  color: var(--ac);
+  font-weight: 700
 }
 
 .sep {
@@ -125,7 +284,7 @@ header {
   padding: 0 13px;
   border-radius: 9px;
   border: 1px solid var(--line2);
-  background: #181b22;
+  background: var(--sur1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -136,19 +295,19 @@ header {
 }
 
 .btn:hover {
-  background: #20242e;
-  border-color: #3a3f4c
+  background: var(--sur2);
+  border-color: var(--sur4)
 }
 
 .btn.pri {
   background: var(--ac);
   border-color: var(--ac);
-  color: #1a0800;
+  color: var(--on-ac);
   font-weight: 650
 }
 
 .btn.pri:hover {
-  background: #ff7d55
+  background: var(--ac-hi)
 }
 
 .btn.ghost {
@@ -159,7 +318,7 @@ header {
 
 .btn.ghost:hover {
   color: var(--tx);
-  background: #1a1d25
+  background: var(--sur1)
 }
 
 .btn:disabled {
@@ -189,7 +348,7 @@ header {
 }
 
 .ibtn:hover:not(:disabled) {
-  background: #1c1f28;
+  background: var(--sur2);
   color: var(--tx)
 }
 
@@ -214,7 +373,7 @@ header {
   width: 260px;
   max-height: 360px;
   overflow: auto;
-  background: #171a21;
+  background: var(--sur1);
   border: 1px solid var(--line2);
   border-radius: 12px;
   padding: 6px;
@@ -238,13 +397,13 @@ header {
 }
 
 .pop button:hover {
-  background: #20242d;
+  background: var(--sur2);
   color: var(--tx)
 }
 
 .pop button.cur {
   color: var(--tx);
-  background: #232733
+  background: var(--sur2)
 }
 
 .pop button.fut {
@@ -264,6 +423,7 @@ main {
 }
 
 .rail {
+  overflow-y: auto;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -293,11 +453,11 @@ main {
 
 .tab:hover {
   color: var(--tx);
-  background: #171a21
+  background: var(--sur1)
 }
 
 .tab.on {
-  background: #1d2029;
+  background: rgba(var(--ac-rgb), .16);
   color: var(--tx)
 }
 
@@ -321,14 +481,14 @@ main {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 40%, #15171e 0, #0b0c10 70%)
+  background: radial-gradient(circle at 50% 40%, var(--sur1) 0, var(--inp) 70%)
 }
 
 .stage::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px);
+  background-image: radial-gradient(var(--sheen) 1px, transparent 1px);
   background-size: 18px 18px;
   pointer-events: none
 }
@@ -355,7 +515,7 @@ main {
   position: absolute;
   padding: 4px 9px;
   border-radius: 7px;
-  background: rgba(10, 11, 14, .72);
+  background: rgba(var(--glass-rgb), .72);
   backdrop-filter: blur(6px);
   font-size: 10.5px;
   font-weight: 700;
@@ -366,7 +526,7 @@ main {
 }
 
 .tag.b {
-  color: #cfd3dc
+  color: var(--tx2)
 }
 
 .tag.a {
@@ -382,7 +542,7 @@ main {
   gap: 8px;
   padding: 6px 11px;
   border-radius: 20px;
-  background: rgba(20, 22, 28, .85);
+  background: rgba(var(--glass-rgb), .85);
   border: 1px solid var(--line2);
   font-size: 12px;
   color: var(--mut);
@@ -418,7 +578,7 @@ main {
   color: var(--mut);
   padding: 6px 10px;
   border-radius: 8px;
-  background: rgba(16, 18, 23, .8);
+  background: rgba(var(--glass-rgb), .8);
   border: 1px solid var(--line)
 }
 
@@ -439,7 +599,7 @@ main {
   width: 200px;
   height: 80px;
   border-radius: 8px;
-  background: rgba(16, 18, 23, .8);
+  background: rgba(var(--glass-rgb), .8);
   border: 1px solid var(--line);
   pointer-events: none;
   display: none
@@ -468,7 +628,7 @@ main {
   gap: 2px;
   padding: 4px;
   border-radius: 10px;
-  background: rgba(16, 18, 23, .88);
+  background: rgba(var(--glass-rgb), .88);
   border: 1px solid var(--line)
 }
 
@@ -483,20 +643,43 @@ main {
 
 .zbar button:hover {
   color: var(--tx);
-  background: #20232c
+  background: var(--sur2)
 }
 
 .zbar button.on {
   color: var(--tx);
-  background: #262a35
+  background: var(--sur2)
 }
 
-.zbar span {
+.zbar .zl {
   font: 12px var(--mono);
-  color: var(--dim);
+  color: var(--tx);
   padding: 0 6px;
-  min-width: 52px;
+  min-width: 58px;
   text-align: center
+}
+
+.zbar .zstep {
+  width: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--tx)
+}
+
+.zbar .zstep svg {
+  width: 16px;
+  height: 16px
+}
+
+.zbar .zstep:hover {
+  background: var(--ac);
+  color: var(--on-ac)
+}
+
+.zbar button:disabled {
+  opacity: .3;
+  pointer-events: none
 }
 
 .zbar .vs {
@@ -513,16 +696,62 @@ main {
   inset: 14px;
   border: 2px dashed var(--ac);
   border-radius: 18px;
-  background: rgba(255, 107, 61, .07);
+  background: rgba(var(--ac-rgb), .07);
   display: none;
   place-items: center;
   font: 700 20px var(--disp);
   color: var(--ac);
-  pointer-events: none
+  pointer-events: none;
+  z-index: 4
 }
 
 .drop.on {
   display: grid
+}
+
+.upload {
+  position: absolute;
+  inset: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px dashed var(--line2);
+  border-radius: 18px;
+  background: var(--bg);
+  color: var(--mut);
+  z-index: 3;
+  transition: border-color .15s, background .15s, color .15s
+}
+
+.upload[hidden] {
+  display: none
+}
+
+.upload svg {
+  width: 56px;
+  height: 56px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--ac);
+  color: var(--on-ac);
+  box-shadow: 0 0 24px rgba(var(--ac-rgb), .45)
+}
+
+.upload b {
+  font: 800 24px var(--disp);
+  color: var(--tx)
+}
+
+.upload span {
+  font-size: 13px
+}
+
+.upload:hover {
+  border-color: var(--ac);
+  background: rgba(var(--ac-rgb), .06);
+  color: var(--tx)
 }
 
 .panel {
@@ -537,7 +766,7 @@ main {
 }
 
 .panel::-webkit-scrollbar-thumb {
-  background: #262a33;
+  background: var(--sur3);
   border-radius: 8px
 }
 
@@ -585,7 +814,7 @@ main {
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ac2);
-  background: rgba(255, 176, 61, .1);
+  background: rgba(var(--ac2-rgb), .1);
   padding: 2px 6px;
   border-radius: 5px
 }
@@ -597,8 +826,8 @@ main {
 }
 
 .hero {
-  background: linear-gradient(160deg, #221812 0, #191c24 55%);
-  border-color: #3a2a22
+  background: linear-gradient(160deg, var(--hero) 0, var(--sur1) 55%);
+  border-color: var(--hero-line)
 }
 
 .lbl {
@@ -612,7 +841,7 @@ main {
 
 .seg {
   display: flex;
-  background: #0f1116;
+  background: var(--inp);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 3px;
@@ -632,9 +861,9 @@ main {
 }
 
 .seg button.on {
-  background: #262a35;
+  background: var(--sur2);
   color: var(--tx);
-  box-shadow: inset 0 0 0 1px #3a3f4c
+  box-shadow: inset 0 0 0 1px var(--sur4)
 }
 
 #upK {
@@ -663,7 +892,7 @@ main {
 
 .seg.big button.on {
   background: var(--ac);
-  color: #1a0800;
+  color: var(--on-ac);
   box-shadow: none
 }
 
@@ -674,7 +903,7 @@ main {
   margin: 12px 0 4px;
   font: 12px var(--mono);
   color: var(--mut);
-  background: #0f1116;
+  background: var(--inp);
   border-radius: 9px;
   padding: 9px 11px
 }
@@ -700,7 +929,7 @@ main {
 
 .sl label {
   font-size: 12.5px;
-  color: #c3c7d1
+  color: var(--tx2)
 }
 
 .sl output {
@@ -732,13 +961,13 @@ input[type=range] {
 input[type=range]::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #2a2e39 var(--a), var(--ac) var(--a), var(--ac) var(--b), #2a2e39 var(--b))
+  background: linear-gradient(90deg, var(--sur3) var(--a), var(--ac) var(--a), var(--ac) var(--b), var(--sur3) var(--b))
 }
 
 input[type=range]::-moz-range-track {
   height: 4px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #2a2e39 var(--a), var(--ac) var(--a), var(--ac) var(--b), #2a2e39 var(--b))
+  background: linear-gradient(90deg, var(--sur3) var(--a), var(--ac) var(--a), var(--ac) var(--b), var(--sur3) var(--b))
 }
 
 input[type=range]::-webkit-slider-thumb {
@@ -765,7 +994,7 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 select {
-  background: #0f1116;
+  background: var(--inp);
   border: 1px solid var(--line2);
   border-radius: 8px;
   height: 30px;
@@ -785,7 +1014,7 @@ select {
 .prog {
   height: 4px;
   border-radius: 4px;
-  background: #0f1116;
+  background: var(--inp);
   overflow: hidden;
   margin-top: 10px;
   display: none
@@ -838,7 +1067,7 @@ select {
 
 .notes li {
   font-size: 12px;
-  color: #b9bdc7;
+  color: var(--tx2);
   display: flex;
   gap: 8px
 }
@@ -862,7 +1091,7 @@ select {
 
 kbd {
   font: 11px var(--mono);
-  background: #1c1f27;
+  background: var(--sur2);
   border: 1px solid var(--line2);
   border-radius: 5px;
   padding: 0 5px;
@@ -870,7 +1099,7 @@ kbd {
 }
 
 .pbox {
-  background: #0f1116;
+  background: var(--inp);
   border: 1px solid var(--line2);
   border-radius: 14px;
   padding: 4px;
@@ -894,7 +1123,7 @@ textarea {
 }
 
 textarea::placeholder {
-  color: #555a67
+  color: var(--dim)
 }
 
 .prow {
@@ -923,13 +1152,13 @@ textarea::placeholder {
   padding: 8px 10px;
   border-radius: 9px;
   border: 1px solid var(--line);
-  background: #15171d;
+  background: var(--sur1);
   line-height: 1.4
 }
 
 .ex button:hover {
   color: var(--tx);
-  border-color: #3a3f4c
+  border-color: var(--sur4)
 }
 
 .engine {
@@ -975,7 +1204,7 @@ textarea::placeholder {
 }
 
 .planwhy {
-  color: #c3c7d1;
+  color: var(--tx2);
   font-size: 12.5px;
   margin: 2px 0 10px
 }
@@ -1028,12 +1257,12 @@ textarea::placeholder {
   display: grid;
   place-items: center;
   font: 700 11px var(--mono);
-  background: #232733;
+  background: var(--sur2);
   color: var(--mut)
 }
 
 .step.c-light .n {
-  background: rgba(255, 176, 61, .16);
+  background: rgba(var(--ac2-rgb), .16);
   color: var(--ac2)
 }
 
@@ -1043,7 +1272,7 @@ textarea::placeholder {
 }
 
 .step.c-look .n {
-  background: rgba(255, 107, 61, .18);
+  background: rgba(var(--ac-rgb), .18);
   color: var(--ac)
 }
 
@@ -1084,7 +1313,7 @@ textarea::placeholder {
 }
 
 .step .x:hover {
-  background: #2a2e38;
+  background: var(--sur3);
   color: var(--tx)
 }
 
@@ -1169,7 +1398,7 @@ textarea::placeholder {
 
 .cats button.on {
   background: var(--tx);
-  color: #111;
+  color: var(--inp);
   border-color: var(--tx)
 }
 
@@ -1194,7 +1423,7 @@ textarea::placeholder {
   width: 100%;
   aspect-ratio: 1/1;
   border-radius: 9px;
-  background: #1b1e26;
+  background: var(--sur1);
   object-fit: cover;
   display: block;
   box-shadow: 0 0 0 1px var(--line)
@@ -1289,7 +1518,7 @@ textarea::placeholder {
 }
 
 .fchip .x:hover {
-  background: #2a2e39;
+  background: var(--sur3);
   color: var(--tx)
 }
 
@@ -1331,7 +1560,7 @@ textarea::placeholder {
 }
 
 .pc:hover {
-  border-color: #3d4250;
+  border-color: var(--sur4);
   transform: translateY(-1px)
 }
 
@@ -1344,7 +1573,7 @@ textarea::placeholder {
   aspect-ratio: 3/2;
   display: block;
   object-fit: cover;
-  background: #1b1e26
+  background: var(--sur1)
 }
 
 .pc .pn {
@@ -1364,7 +1593,7 @@ textarea::placeholder {
   font: 10px var(--mono);
   font-style: normal;
   color: var(--mut);
-  background: #12141a;
+  background: var(--sur1);
   border-radius: 4px;
   padding: 1px 4px
 }
@@ -1410,7 +1639,7 @@ textarea::placeholder {
 .save input {
   flex: 1;
   height: 32px;
-  background: #0f1116;
+  background: var(--inp);
   border: 1px solid var(--line2);
   border-radius: 9px;
   padding: 0 10px;
@@ -1468,7 +1697,7 @@ textarea::placeholder {
 .chips button.on {
   border-color: var(--ac);
   color: var(--tx);
-  background: rgba(255, 107, 61, .1)
+  background: rgba(var(--ac-rgb), .1)
 }
 
 .tog {
@@ -1478,14 +1707,14 @@ textarea::placeholder {
   gap: 10px;
   padding: 10px 0;
   font-size: 12.5px;
-  color: #c3c7d1
+  color: var(--tx2)
 }
 
 .sw {
   width: 34px;
   height: 20px;
   border-radius: 12px;
-  background: #2a2e39;
+  background: var(--sur3);
   position: relative;
   flex: none;
   transition: background .15s
@@ -1522,11 +1751,11 @@ textarea::placeholder {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  background: #15171d;
+  background: var(--sur1);
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 7px 9px;
-  color: #c3c7d1
+  color: var(--tx2)
 }
 
 .stack li span {
@@ -1569,8 +1798,8 @@ textarea::placeholder {
 }
 
 .madd button:hover {
-  border-color: #3a3f4c;
-  background: #20242e
+  border-color: var(--sur4);
+  background: var(--sur2)
 }
 
 i.ai {
@@ -1579,16 +1808,16 @@ i.ai {
   letter-spacing: .06em;
   padding: 2px 5px;
   border-radius: 5px;
-  background: linear-gradient(90deg, #ff6b3d, #ff3d7f);
-  color: #fff
+  background: linear-gradient(90deg, var(--ac), var(--ac-lo));
+  color: var(--on-ac)
 }
 
 .segst {
   margin-top: 10px;
   padding: 9px 11px;
   border-radius: 9px;
-  background: #1b1810;
-  border: 1px solid #4a3a1a;
+  background: var(--note-bg);
+  border: 1px solid var(--note-line);
   color: var(--ac2);
   font-size: 12px
 }
@@ -1607,14 +1836,14 @@ i.ai {
   padding: 8px 9px;
   border-radius: 9px;
   border: 1px solid var(--line);
-  background: #15171d;
+  background: var(--sur1);
   cursor: pointer;
   font-size: 12.5px
 }
 
 .mk.on {
   border-color: var(--ac);
-  background: #1d1a17
+  background: var(--sur1)
 }
 
 .mk.off .mt {
@@ -1643,7 +1872,7 @@ i.ai {
 }
 
 .mk button:hover {
-  background: #262a35;
+  background: var(--sur2);
   color: var(--tx)
 }
 
@@ -1670,7 +1899,7 @@ i.ai {
   left: 50%;
   bottom: 74px;
   transform: translate(-50%, 20px);
-  background: #1f232c;
+  background: var(--sur2);
   border: 1px solid var(--line2);
   color: var(--tx);
   padding: 10px 16px;
@@ -1691,7 +1920,7 @@ i.ai {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(5, 6, 8, .65);
+  background: rgba(var(--glass-rgb), .65);
   backdrop-filter: blur(4px);
   display: none;
   place-items: center;
@@ -1719,4 +1948,382 @@ i.ai {
 .mbox>p {
   color: var(--mut);
   font-size: 12px
+}
+
+/* ---------- overlays, story templates, feed planner, batch export ---------- */
+.ovlist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px
+}
+
+.ovlist li {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px 4px
+}
+
+.ovh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px
+}
+
+.ovh b {
+  flex: 1;
+  font-size: 12.5px
+}
+
+.ovh .btn {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11.5px
+}
+
+.ovh .x {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  color: var(--mut);
+  font-size: 17px
+}
+
+.ovh .x:hover {
+  background: var(--ac);
+  color: var(--on-ac)
+}
+
+.tgrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 14px
+}
+
+.tt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: var(--mut);
+  font-size: 10.5px
+}
+
+.tt canvas {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 7px;
+  background: var(--card);
+  border: 2px solid transparent
+}
+
+.tt:hover {
+  color: var(--tx)
+}
+
+.tt.on canvas {
+  border-color: var(--ac)
+}
+
+.tt.on span {
+  color: var(--tx)
+}
+
+.tprev {
+  display: block;
+  width: 100%;
+  max-width: 270px;
+  margin: 14px auto 0;
+  aspect-ratio: 9 / 16;
+  height: auto;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .5)
+}
+
+#fdAcc {
+  flex: 1;
+  min-width: 0
+}
+
+.feedgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: 14px
+}
+
+.fd {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--card);
+  cursor: grab
+}
+
+.feedgrid.s11 .fd {
+  aspect-ratio: 1 / 1
+}
+
+.fd img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none
+}
+
+.fd button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .7);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity .15s
+}
+
+.fd:hover button {
+  opacity: 1
+}
+
+.fd button:hover {
+  background: var(--ac)
+}
+
+.fd.drag {
+  opacity: .4
+}
+
+.fd.over {
+  outline: 2px solid var(--ac);
+  outline-offset: -2px
+}
+
+.batch {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line)
+}
+
+.batch b {
+  font-size: 13px
+}
+
+.batch p {
+  color: var(--mut);
+  font-size: 12px;
+  margin: 4px 0 10px
+}
+
+.batch .btn {
+  width: 100%
+}
+
+/* ---------- text tool ---------- */
+.txadds {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px
+}
+
+.txadd {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+
+.txadd:hover,
+.txst:hover {
+  border-color: var(--ac)
+}
+
+.txstyles {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 14px
+}
+
+.txst {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--sur1);
+  padding: 0
+}
+
+.txst canvas {
+  display: block;
+  width: 100%;
+  height: auto
+}
+
+.txarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 56px;
+  background: var(--inp);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  padding: 8px 10px;
+  outline: 0;
+  font-size: 14px
+}
+
+.txarea:focus {
+  border-color: var(--ac)
+}
+
+.txrow {
+  margin-top: 8px;
+  gap: 6px
+}
+
+.txrow select {
+  flex: 1;
+  min-width: 0;
+  height: 32px
+}
+
+.tb {
+  flex: 0 0 34px !important;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line2);
+  color: var(--mut);
+  font-size: 13px
+}
+
+.tb.on {
+  background: var(--ac);
+  border-color: var(--ac);
+  color: var(--on-ac)
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px
+}
+
+.swatches button,
+.swc {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .25);
+  cursor: pointer
+}
+
+.swatches button.on {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px
+}
+
+.swc {
+  position: relative;
+  overflow: hidden;
+  background: conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)
+}
+
+.swc input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer
+}
+
+#txFx button.on {
+  background: var(--ac);
+  border-color: var(--ac);
+  color: var(--on-ac)
+}
+
+.txlist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px
+}
+
+.txlist li {
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+
+.txlist li.on {
+  border-color: var(--ac)
+}
+
+/* ---------- theme picker ---------- */
+.thdot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ac);
+  box-shadow: 0 0 0 2px var(--sur3);
+  margin-right: 2px
+}
+
+.thpop {
+  width: 280px;
+  z-index: 30
+}
+
+.thpop button {
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px
+}
+
+.thpop b {
+  display: block;
+  font-size: 13px;
+  color: var(--tx)
+}
+
+.thpop small {
+  display: block;
+  font-size: 11px;
+  color: var(--mut)
+}
+
+.thsw {
+  display: flex;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line2)
+}
+
+.thsw i {
+  width: 16px;
+  height: 32px
+}
+
+.thpop button.cur {
+  outline: 1px solid var(--ac)
 }

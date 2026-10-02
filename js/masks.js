@@ -10,6 +10,10 @@ var MASK_TYPES = {
       name: 'Linear gradient',
       tip: 'Drag the handles: full effect at the solid line, fading out by the dashed line. Drag anywhere else to draw a new gradient.'
     },
+    window: {
+      name: 'B&W Window',
+      tip: 'A black and white window with the picture inside shifted out of line, on top of the colour photo.'
+    },
     radial: {
       name: 'Radial',
       tip: 'Drag the centre to move, the edge dots to resize. Drag anywhere else to draw a new circle.'
@@ -71,6 +75,22 @@ var MASK_TYPES = {
       }]
     ]
   },
+  // B&W window: what dragging on the photo does, and its sliders [key, label, min, max, default].
+  WIN_MODES = {
+    box: ['Box', 'Drag the corner dots to resize the window, or drag inside it to move it. Drag anywhere else to draw a new window.'],
+    picture: ['Picture', 'Drag on the photo to slide the picture inside the window and pick what shows in it.'],
+    paint: ['Paint', 'Paint to add more of the photo to the window, e.g. let the subject break out of the box.'],
+    erase: ['Erase', 'Paint to cut parts out of the window.']
+  },
+  WIN_SL = [
+    ['x', 'Shift left / right', -100, 100, 15],
+    ['y', 'Shift up / down', -100, 100, -10],
+    ['zoom', 'Zoom', 0, 100, 10],
+    ['round', 'Rounded corners', 0, 100, 45],
+    ['shadow', 'Shadow', 0, 100, 35],
+    ['bw', 'Black & white', 0, 100, 100]
+  ],
+  winMode = 'box',
   mSel = 0,
   showOv = false,
   ovFlash = 0,
@@ -147,6 +167,19 @@ function addMask(type) {
     mk.x2 = b[0];
     mk.y2 = b[1]
   } else if (type === 'brush') mk.strokes = [];
+  else if (type === 'window') {
+    var wc = toSrc({
+      offsetX: R.x + R.w / 2,
+      offsetY: R.y + R.h / 2
+    }, R);
+    mk.cx = wc[0];
+    mk.cy = wc[1];
+    mk.bw = .445;
+    mk.bh = .33;
+    mk.win = {};
+    mk.strokes = [];
+    winMode = 'box'
+  }
   masks().push(mk);
   mSel = masks().length - 1;
   if (MASK_TYPES[type].ai) {
@@ -243,14 +276,82 @@ function renderMasks() {
   box.innerHTML = '';
   box.hidden = !sel || !!sel.pending;
   if (!sel || sel.pending) return draw();
-  var h = '<p class="mtip">' + esc(MASK_TYPES[sel.type].tip) + '</p>';
+  var isWin = sel.type === 'window',
+    winBrush = isWin && (winMode === 'paint' || winMode === 'erase'),
+    h = '<p class="mtip">' + esc(isWin ? WIN_MODES[winMode][1] : MASK_TYPES[sel.type].tip) + '</p>';
+  if (isWin) h += '<div class="seg" id="winMode">' + Object.keys(WIN_MODES).map(function(k) {
+    return '<button data-w="' + k + '"' + (k === winMode ? ' class="on"' : '') + '>' + WIN_MODES[k][0] + '</button>'
+  }).join('') + '</div>' + (winBrush ? '<div id="brS"></div>' : '') + '<div id="winS"></div>';
   if (sel.type === 'brush') h += '<div class="seg" id="brMode"><button data-b="paint"' + (brush.erase ? '' : ' class="on"') + '>Paint</button><button data-b="erase"' + (brush.erase ? ' class="on"' : '') + '>Erase</button></div><div id="brS"></div>';
   if (MASK_QUICK[sel.type]) h += '<div class="chips mq">' + MASK_QUICK[sel.type].map(function(q, i) {
     return '<button data-q="' + i + '">' + q[0] + '</button>'
   }).join('') + '</div>';
-  h += '<div id="mkS"></div><div class="row" style="margin-top:10px"><button class="btn" id="bInv">' + (sel.inv ? 'Un-invert' : 'Invert') + '</button><button class="btn" id="bMkReset">Reset sliders</button>' + (sel.type === 'brush' ? '<button class="btn" id="bBrClear">Clear paint</button>' : '') + '</div>';
+  h += '<div id="mkS"></div><div class="row" style="margin-top:10px"><button class="btn" id="bInv">' + (sel.inv ? 'Un-invert' : 'Invert') + '</button><button class="btn" id="bMkReset">Reset sliders</button>' + (sel.type === 'brush' || isWin && sel.strokes && sel.strokes.length ? '<button class="btn" id="bBrClear">Clear paint</button>' : '') + '</div>';
   box.innerHTML = h;
-  if (sel.type === 'brush') {
+  if (isWin) {
+    $$('#winMode button').forEach(function(b) {
+      b.onclick = function() {
+        winMode = b.dataset.w;
+        brush.erase = winMode === 'erase';
+        renderMasks()
+      }
+    });
+    mkSlider($('#winS'), {
+      label: 'Width',
+      min: 5,
+      max: 100,
+      def: 89,
+      fmt: function(v) {
+        return v + '%'
+      },
+      get: function() {
+        return Math.round(sel.bw * 200)
+      },
+      set: function(v) {
+        sel.bw = v / 200
+      },
+      commit: function(v) {
+        push('Window width ' + v + '%')
+      }
+    }).sync();
+    mkSlider($('#winS'), {
+      label: 'Height',
+      min: 5,
+      max: 100,
+      def: 66,
+      fmt: function(v) {
+        return v + '%'
+      },
+      get: function() {
+        return Math.round(sel.bh * 200)
+      },
+      set: function(v) {
+        sel.bh = v / 200
+      },
+      commit: function(v) {
+        push('Window height ' + v + '%')
+      }
+    }).sync();
+    WIN_SL.forEach(function(o) {
+      mkSlider($('#winS'), {
+        label: o[1],
+        min: o[2],
+        max: o[3],
+        def: o[4],
+        get: function() {
+          var w = sel.win || {};
+          return w[o[0]] == null ? o[4] : w[o[0]]
+        },
+        set: function(v) {
+          (sel.win = sel.win || {})[o[0]] = v
+        },
+        commit: function(v) {
+          push('Window ' + o[1].toLowerCase() + ' ' + v)
+        }
+      }).sync()
+    })
+  }
+  if (sel.type === 'brush' || winBrush) {
     $$('#brMode button').forEach(function(b) {
       b.onclick = function() {
         brush.erase = b.dataset.b === 'erase';
@@ -286,12 +387,13 @@ function renderMasks() {
       commit: function() {},
       live: false
     }).sync();
-    $('#bBrClear').onclick = function() {
-      sel.strokes = [];
-      push('Cleared brush');
-      schedule()
-    }
   }
+  if ($('#bBrClear')) $('#bBrClear').onclick = function() {
+    sel.strokes = [];
+    push('Cleared brush');
+    renderMasks();
+    schedule()
+  };
   if (sel.type === 'face' && sel.faces) {
     var fb = document.createElement('div');
     fb.className = 'row';
@@ -395,7 +497,7 @@ var mDrag = null,
 function maskTool() {
   var m = selMask();
   if (!m || m.pending || !work || m.off) return MASK_VIEW;
-  return m.type === 'brush' ? BRUSH_TOOL : m.type === 'radial' ? RADIAL_TOOL : m.type === 'linear' ? LINEAR_TOOL : m.type === 'face' && m.faces ? FACE_TOOL : MASK_VIEW
+  return m.type === 'brush' ? BRUSH_TOOL : m.type === 'radial' ? RADIAL_TOOL : m.type === 'linear' ? LINEAR_TOOL : m.type === 'window' ? WINDOW_TOOL : m.type === 'face' && m.faces ? FACE_TOOL : MASK_VIEW
 }
 
 // Overlay of the selected mask as a red tint, cached until the mask or crop changes.
@@ -614,9 +716,122 @@ var RADIAL_TOOL = {
     strokePath(x, ellipsePts(m, R, 1 - (m.feather == null ? .5 : m.feather)));
     x.setLineDash([]);
     var H = this.handles(m, R);
-    handle(x, H.c, 6, '#ff6b3d');
+    handle(x, H.c, 6, cssv('--ac'));
     handle(x, H.rx, 5);
     handle(x, H.ry, 5);
+    x.restore()
+  }
+};
+
+// B&W window: Box mode moves and resizes the box, Picture mode slides the picture inside it,
+// Paint and Erase use the brush to add to or cut from the window.
+var WINDOW_TOOL = {
+  brush: function() {
+    return winMode === 'paint' || winMode === 'erase'
+  },
+  corners: function(m, R) {
+    return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function(k) {
+      return toScreen(m.cx + k[0] * m.bw, m.cy + k[1] * m.bh, R)
+    })
+  },
+  hit: function(e, R) {
+    var m = selMask(),
+      C = this.corners(m, R),
+      p = toSrc(e, R);
+    for (var i = 0; i < 4; i++)
+      if (Math.hypot(e.offsetX - C[i][0], e.offsetY - C[i][1]) < 12) return 'corner';
+    return Math.abs(p[0] - m.cx) < m.bw && Math.abs(p[1] - m.cy) < m.bh ? 'move' : null
+  },
+  cursor: function(e, R) {
+    if (this.brush()) return 'none';
+    if (winMode === 'picture') return mDrag ? 'grabbing' : 'grab';
+    var h = this.hit(e, R);
+    return h === 'move' ? 'move' : h ? 'nwse-resize' : 'crosshair'
+  },
+  hover: function(e, R) {
+    if (this.brush()) BRUSH_TOOL.hover(e, R);
+    else hoverPt = null
+  },
+  down: function(e, R) {
+    if (this.brush()) {
+      brush.erase = winMode === 'erase';
+      return BRUSH_TOOL.down(e, R)
+    }
+    var m = selMask(),
+      w = m.win = m.win || {};
+    if (winMode === 'picture') {
+      mDrag = {
+        t: 'pic',
+        s0: [e.offsetX, e.offsetY],
+        o0: [w.x == null ? 15 : w.x, w.y == null ? -10 : w.y]
+      };
+      return true
+    }
+    var h = this.hit(e, R),
+      p = toSrc(e, R);
+    mDrag = {
+      t: 'win',
+      h: h || 'new',
+      p0: p,
+      m0: [m.cx, m.cy]
+    };
+    return true
+  },
+  move: function(e, R) {
+    if (this.brush()) return BRUSH_TOOL.move(e, R);
+    var m = selMask(),
+      d = mDrag,
+      p = toSrc(e, R);
+    if (d.t === 'pic') {
+      // slider units: 100 = a fifth of the photo's short side
+      var G = geoNow(),
+        u = .2 * Math.min(G.w, G.h) * R.s / 100,
+        cl = function(v) {
+          return Math.round(Math.max(-100, Math.min(100, v)))
+        };
+      m.win.x = cl(d.o0[0] + (e.offsetX - d.s0[0]) / u);
+      m.win.y = cl(d.o0[1] + (e.offsetY - d.s0[1]) / u)
+    } else if (d.h === 'move') {
+      m.cx = d.m0[0] + p[0] - d.p0[0];
+      m.cy = d.m0[1] + p[1] - d.p0[1]
+    } else if (d.h === 'corner') {
+      m.bw = Math.max(.01, Math.abs(p[0] - m.cx));
+      m.bh = Math.max(.01, Math.abs(p[1] - m.cy))
+    } else {
+      m.cx = (d.p0[0] + p[0]) / 2;
+      m.cy = (d.p0[1] + p[1]) / 2;
+      m.bw = Math.max(.01, Math.abs(p[0] - d.p0[0]) / 2);
+      m.bh = Math.max(.01, Math.abs(p[1] - d.p0[1]) / 2)
+    }
+    schedule(true)
+  },
+  up: function() {
+    if (this.brush()) {
+      BRUSH_TOOL.up();
+      return renderMasks()
+    }
+    var d = mDrag;
+    mDrag = null;
+    push(d.t === 'pic' ? 'Moved picture in window' : d.h === 'move' ? 'Moved window' : 'Resized window');
+    renderMasks();
+    schedule()
+  },
+  draw: function(x, R) {
+    var m = selMask();
+    if (this.brush()) BRUSH_TOOL.draw(x, R);
+    else drawOverlay(x, R);
+    if (winMode !== 'box') return;
+    var C = this.corners(m, R);
+    x.save();
+    x.strokeStyle = 'rgba(0,0,0,.5)';
+    x.lineWidth = 3;
+    strokePath(x, C.concat([C[0]]));
+    x.strokeStyle = '#fff';
+    x.lineWidth = 1.5;
+    strokePath(x, C.concat([C[0]]));
+    C.forEach(function(c) {
+      handle(x, c, 5)
+    });
     x.restore()
   }
 };
@@ -723,7 +938,7 @@ var LINEAR_TOOL = {
       ])
     });
     x.restore();
-    handle(x, a, 6, '#ff6b3d');
+    handle(x, a, 6, cssv('--ac'));
     handle(x, b, 5);
     handle(x, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], 4)
   }
@@ -901,7 +1116,7 @@ var FACE_TOOL = {
       strokePath(x, pts);
       if (i !== faceSel) return;
       var H = FACE_TOOL.handles(f, R);
-      handle(x, H.c, 5, '#ff6b3d');
+      handle(x, H.c, 5, cssv('--ac'));
       handle(x, H.w, 5);
       handle(x, H.h, 5)
     });

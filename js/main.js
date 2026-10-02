@@ -64,7 +64,7 @@ $('#bHist').onclick = function(e) {
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.hwrap')) $('#histPop').classList.remove('on')
 });
-$('#bOpen').onclick = function() {
+$('#bOpen').onclick = $('#upload').onclick = function() {
   $('#file').click()
 };
 $('#file').onchange = function() {
@@ -106,6 +106,14 @@ document.addEventListener('keydown', function(e) {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y' && !typing) {
     e.preventDefault();
     redo();
+    return
+  }
+  // Zoom keys; Ctrl/Cmd with + − 0 zooms the photo rather than the page.
+  if (!typing && afterC.width && (e.key === '+' || e.key === '=' || e.key === '-' || e.key === '_' || e.key === '0' || !e.metaKey && !e.ctrlKey && (e.key === '1' || e.key === '2'))) {
+    e.preventDefault();
+    if (e.key === '+' || e.key === '=') zoomStep(1);
+    else if (e.key === '-' || e.key === '_') zoomStep(-1);
+    else zoomTo(e.key === '0' ? 'fit' : +e.key);
     return
   }
   if (typing || e.metaKey || e.ctrlKey) return;
@@ -198,13 +206,18 @@ $('#exGo').onclick = function() {
       b.textContent = label
     }) : m
   }).then(function(m) {
+    return typeof textsReady === 'function' ? textsReady(st.texts || []).then(function() {
+      return m
+    }) : m
+  }).then(function(m) {
     var c = document.createElement('canvas');
     putC(c, m);
+    if (typeof paintTexts === 'function') paintTexts(c, st.texts || []);
     c.toBlob(function(blob) {
       var a = document.createElement('a'),
         u = URL.createObjectURL(blob);
       a.href = u;
-      a.download = (fileName.replace(/\.[^.]+$/, '') || 'photo') + '-lumen' + (ex.s > 1 ? '-' + ex.s + 'x' : '') + '.' + (ex.f === 'png' ? 'png' : 'jpg');
+      a.download = (fileName.replace(/\.[^.]+$/, '') || 'photo') + '-studio-de-nuance' + (ex.s > 1 ? '-' + ex.s + 'x' : '') + '.' + (ex.f === 'png' ? 'png' : 'jpg');
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -225,7 +238,6 @@ $('#exGo').onclick = function() {
 
 /* boot */
 renderMine();
-loadSample();
 window.__lumen = {
   P: P,
   parsePrompt: parsePrompt,

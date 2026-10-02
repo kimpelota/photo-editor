@@ -110,6 +110,11 @@ function layout() {
     s = zoom === 'fit' ? fit : zoom;
   var dw = iw * s,
     dh = ih * s;
+  // Keep the photo on screen: centred when it fits, edges no further in than a small margin.
+  var mx = Math.max(0, (dw - cw) / 2 + 40),
+    my = Math.max(0, (dh - (ch - 40)) / 2 + 40);
+  pan.x = Math.max(-mx, Math.min(mx, pan.x));
+  pan.y = Math.max(-my, Math.min(my, pan.y));
   return {
     x: (cw - dw) / 2 + pan.x,
     y: (ch - 40 - dh) / 2 + pan.y,
@@ -205,8 +210,10 @@ function draw() {
   if (T) T.draw(vctx, R);
   $('#zl').textContent = Math.round(R.s * 100) + '%';
   $$('.zbar [data-z]').forEach(function(b) {
-    b.classList.toggle('on', String(zoom) === b.dataset.z)
-  })
+    b.classList.toggle('on', b.dataset.z === 'fit' ? zoom === 'fit' : Math.abs(R.s - b.dataset.z) < .005)
+  });
+  $('#zOut').disabled = R.s <= zMin(R) + 1e-6;
+  $('#zIn').disabled = R.s >= Z_MAX - 1e-6
 }
 
 function updDims() {
@@ -223,9 +230,36 @@ function updDims() {
 }
 
 /* pointer: split drag, pan, wheel zoom, loupe */
-var drag = null;
+var drag = null,
+  touches = {},
+  pinch = null;
+
+function pinchInfo() {
+  var p = Object.keys(touches).map(function(k) {
+    return touches[k]
+  });
+  return {
+    d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1,
+    x: (p[0].x + p[1].x) / 2,
+    y: (p[0].y + p[1].y) / 2
+  }
+}
 view.addEventListener('pointerdown', function(e) {
   if (!afterC.width) return;
+  // Two fingers on a touch screen: pinch to zoom, move both to pan.
+  if (e.pointerType === 'touch') {
+    touches[e.pointerId] = {
+      x: e.offsetX,
+      y: e.offsetY
+    };
+    if (Object.keys(touches).length === 2) {
+      if (drag && drag.t === 'tool') drag.T.up(e, layout());
+      drag = null;
+      pinch = pinchInfo();
+      view.setPointerCapture(e.pointerId);
+      return
+    }
+  }
   var R = layout(),
     mx = e.offsetX,
     sx = R.x + R.w * split,
@@ -262,6 +296,19 @@ view.addEventListener('pointerdown', function(e) {
   }
 });
 view.addEventListener('pointermove', function(e) {
+  if (touches[e.pointerId]) touches[e.pointerId] = {
+    x: e.offsetX,
+    y: e.offsetY
+  };
+  if (pinch && Object.keys(touches).length === 2) {
+    var q = pinchInfo(),
+      R0 = layout();
+    pan.x += q.x - pinch.x;
+    pan.y += q.y - pinch.y;
+    zoomAt(R0.s * q.d / pinch.d, q.x, q.y);
+    pinch = q;
+    return
+  }
   var R = layout();
   if (drag && drag.t === 'tool') {
     drag.T.move(e, R);
@@ -273,7 +320,8 @@ view.addEventListener('pointermove', function(e) {
       split = Math.max(0, Math.min(1, (e.offsetX - R.x) / R.w))
     } else {
       pan.x = drag.px + e.clientX - drag.x;
-      pan.y = drag.py + e.clientY - drag.y
+      pan.y = drag.py + e.clientY - drag.y;
+      view.style.cursor = 'grabbing'
     }
     draw();
     return
@@ -292,35 +340,135 @@ view.addEventListener('pointermove', function(e) {
   view.style.cursor = cmpOn() && Math.abs(e.offsetX - sx) < 18 ? 'ew-resize' : (R.w > R.cw - 40 || R.h > R.ch - 60) ? 'grab' : 'default';
   doLoupe(e.offsetX, e.offsetY, R)
 });
-view.addEventListener('pointerup', function(e) {
+function pointerEnd(e) {
+  delete touches[e.pointerId];
+  if (pinch) {
+    if (Object.keys(touches).length < 2) pinch = null;
+    return
+  }
   if (drag && drag.t === 'tool') drag.T.up(e, layout());
+  if (drag && drag.t === 'pan') view.style.cursor = 'grab';
   drag = null
-});
+}
+view.addEventListener('pointerup', pointerEnd);
+view.addEventListener('pointercancel', pointerEnd);
 view.addEventListener('pointerleave', function() {
   if (!drag) loupe.style.display = 'none'
 });
-view.addEventListener('dblclick', function() {
-  zoom = 'fit';
-  pan = {
-    x: 0,
-    y: 0
-  };
-  draw()
+/* ---- zoom ---- */
+var Z_MAX = 8,
+  Z_STOPS = [.1, .125, .167, .25, .333, .5, .667, .75, 1, 1.5, 2, 3, 4, 6, 8],
+  zAnim = 0;
+
+function zMin(R) {
+  return Math.min(R.fit, Z_STOPS[0])
+}
+
+// Zoom to `ns`, keeping the photo point under (ax, ay) where it is.
+function zoomAt(ns, ax, ay) {
+  if (!afterC.width) return;
+  var R = layout();
+  ns = Math.max(zMin(R), Math.min(Z_MAX, ns));
+  if (ax == null) {
+    ax = R.cw / 2;
+    ay = (R.ch - 40) / 2
+  }
+  var nx = ax - (ax - R.x) * ns / R.s,
+    ny = ay - (ay - R.y) * ns / R.s;
+  // Snap back to "Fit" when zooming out lands on it, so the photo re-centres.
+  if (Math.abs(ns - R.fit) / R.fit < .02) {
+    zoom = 'fit';
+    pan = {
+      x: 0,
+      y: 0
+    }
+  } else {
+    zoom = ns;
+    pan.x = nx - (R.cw - afterC.width * ns) / 2;
+    pan.y = ny - (R.ch - 40 - afterC.height * ns) / 2
+  }
+  draw();
+  loupe.style.display = 'none'
+}
+
+// Animated zoom for buttons, keys and double-click.
+function zoomTo(target, ax, ay) {
+  if (!afterC.width) return;
+  cancelAnimationFrame(zAnim);
+  var R = layout(),
+    s0 = R.s,
+    p0 = {
+      x: pan.x,
+      y: pan.y
+    },
+    fitT = target === 'fit' || Math.abs(target - R.fit) / R.fit < .02,
+    s1 = fitT ? R.fit : Math.max(zMin(R), Math.min(Z_MAX, target)),
+    p1 = {
+      x: 0,
+      y: 0
+    };
+  if (!fitT) {
+    zoomAt(s1, ax, ay);
+    p1 = {
+      x: pan.x,
+      y: pan.y
+    }
+  }
+  var t0 = performance.now();
+  (function step(now) {
+    var k = Math.min(1, (now - t0) / 200),
+      e = 1 - Math.pow(1 - k, 3);
+    zoom = s0 * Math.pow(s1 / s0, e);
+    pan = {
+      x: p0.x + (p1.x - p0.x) * e,
+      y: p0.y + (p1.y - p0.y) * e
+    };
+    if (k >= 1) {
+      zoom = fitT ? 'fit' : s1;
+      pan = p1
+    } else zAnim = requestAnimationFrame(step);
+    draw()
+  })(t0);
+  loupe.style.display = 'none'
+}
+
+function zoomStep(dir) {
+  var R = layout(),
+    s = R.s,
+    stops = Z_STOPS.concat([R.fit]).sort(function(a, b) {
+      return a - b
+    }),
+    next = dir > 0 ? stops.filter(function(x) {
+      return x > s * 1.01
+    })[0] : stops.filter(function(x) {
+      return x < s * .99
+    }).pop();
+  if (next != null) zoomTo(next)
+}
+view.addEventListener('dblclick', function(e) {
+  if (!afterC.width || tool() && !tool().noTool) return;
+  var R = layout();
+  // Double-click zooms in on that spot; double-click again goes back to Fit.
+  if (R.s <= R.fit * 1.05) zoomTo(Math.max(1, R.fit * 2.5), e.offsetX, e.offsetY);
+  else zoomTo('fit')
 });
 view.addEventListener('wheel', function(e) {
   if (!afterC.width) return;
   e.preventDefault();
   var R = layout(),
-    ns = Math.max(R.fit * .5, Math.min(8, R.s * Math.exp(-e.deltaY * .0018))),
-    mx = e.offsetX,
-    my = e.offsetY;
-  var nx = mx - (mx - R.x) * ns / R.s,
-    ny = my - (my - R.y) * ns / R.s;
-  zoom = ns;
-  pan.x = nx - (R.cw - afterC.width * ns) / 2;
-  pan.y = ny - (R.ch - 40 - afterC.height * ns) / 2;
-  draw();
-  loupe.style.display = 'none'
+    dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY,
+    // A mouse wheel moves in big whole steps; a trackpad sends small, smooth ones.
+    mouse = e.deltaMode === 1 || (Math.abs(e.deltaY) >= 50 && !e.deltaX && e.deltaY % 1 === 0),
+    over = R.w > R.cw - 40 || R.h > R.ch - 60;
+  if (e.ctrlKey || e.metaKey) zoomAt(R.s * Math.exp(-dy * .01), e.offsetX, e.offsetY); // trackpad pinch
+  else if (mouse || !over) zoomAt(R.s * Math.exp(-dy * .0018), e.offsetX, e.offsetY);
+  else {
+    // Two-finger scroll moves around a zoomed-in photo.
+    pan.x -= e.deltaX;
+    pan.y -= dy;
+    draw();
+    loupe.style.display = 'none'
+  }
 }, {
   passive: false
 });
@@ -395,14 +543,18 @@ new ResizeObserver(function() {
 }).observe(stage);
 $$('.zbar [data-z]').forEach(function(b) {
   b.onclick = function() {
-    zoom = b.dataset.z === 'fit' ? 'fit' : +b.dataset.z;
-    pan = {
-      x: 0,
-      y: 0
-    };
-    draw()
+    zoomTo(b.dataset.z === 'fit' ? 'fit' : +b.dataset.z)
   }
 });
+$('#zIn').onclick = function() {
+  zoomStep(1)
+};
+$('#zOut').onclick = function() {
+  zoomStep(-1)
+};
+$('#zl').onclick = function() {
+  zoomTo('fit')
+};
 $('#bSplit').onclick = function() {
   showSplit = !showSplit;
   this.classList.toggle('on', showSplit);

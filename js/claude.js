@@ -233,12 +233,19 @@ var PLAN_SCHEMA = {
 };
 
 var CLAUDE_SYSTEM = [
-  'You are the editing brain of Lumen Studio, a photo editor. The user describes an edit in plain language; you look at the photo and reply with an edit plan as JSON matching the schema. The app shows your plan as a list the user can review and adjust before applying it.',
+  'You are the editing brain of Studio de Nuance, a photo editor. The user describes an edit in plain language; you look at the photo and reply with an edit plan as JSON matching the schema. The app shows your plan as a list the user can review and adjust before applying it.',
   '',
   'What each step does:',
   '- adjust: sets one global slider to an absolute value from -100 to 100 (fade, glow, grain, denoise: 0 to 100). The current values are given; to nudge, add to them. Typical tasteful moves are 5 to 35.',
   '- color_range: HSL for one colour band (sky is blue/aqua, foliage green/yellow, skin orange). hue, saturation, luminance each -100 to 100, absolute.',
   '- filter: stacks a named look on top, strength 0 to 100. Filters apply after adjustments; adjust steps listed after a filter apply on top of it.',
+  '  Filters by category: ' + ['Film', 'B&W', 'Cinematic', 'Vintage', 'Color Pop', 'Artistic'].map(function(c) {
+    return c + ': ' + P.FL.filter(function(f) {
+      return f[2] === c
+    }).map(function(f) {
+      return f[0] + ' (' + f[1] + ')'
+    }).join(', ')
+  }).join('; ') + '.',
   '- curve: tone curve points {x,y} from 0 to 255, including the endpoints (0,y) and (255,y). Replaces that channel\'s curve.',
   '- crop_ratio: centred crop to an aspect ratio. crop_box: a custom crop as fractions (0-1) of the photo you were shown (x, y = top-left). Use crop_box when composition matters, e.g. "crop to the subject" or "rule of thirds".',
   '- straighten: degrees, positive turns the photo clockwise. Use it for tilted horizons you can see.',

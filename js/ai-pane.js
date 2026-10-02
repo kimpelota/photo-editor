@@ -1,6 +1,6 @@
 /* ---------- AI PANE UI ---------- */
-var EXAMPLES = ['make it warmer and a bit brighter, then add a vintage film look but keep the skin tones natural, and crop to square', 'less contrast, not so blue, lift the shadows a lot and make the sky bluer',
-  'black and white with lots of grain and a strong vignette, then sharpen it slightly', 'moody cinematic look but not too dark, recover the highlights, crop 16:9', 'remove the people in the background and make the grass greener', 'enhance it, upscale 4x, reduce the noise and make the colors pop'
+var EXAMPLES = ['make it warmer and a bit brighter, then add a vintage film look but keep the skin tones natural, and crop to square', 'it looks flat and way too yellow, and the sky is blown out',
+  'blur everything except the subject, then give it teal shadows and warm highlights', 'make it look like a 90s disposable camera shot but don’t make it any darker', 'this is a food photo for instagram, twice as vibrant except the greens', 'moody cinematic look but not too dark, straighten 2 degrees clockwise, crop 16:9', 'remove the people in the background and make the grass greener'
 ];
 $('#examples').innerHTML = EXAMPLES.map(function(e, i) {
   return '<button data-i="' + i + '">' + esc(e) + '</button>'
@@ -49,16 +49,45 @@ function stepInfoBase(s) {
         return (SHORT[k] || k) + ' ' + sg(Math.round(s.vals[k] * s.m))
       });
       return {
-        c: 'look', t: s.name + ' mood' + (s.m < 0 ? ' (reduced)' : ''), d: (s.cap ? 'Toned down · ' : '') + ks.join(', '), v: Math.round(Math.abs(s.m) * 100) + '%', rng: [0, 200, Math.round(Math.abs(s.m) * 100), function(x) {
+        c: 'look', t: s.name + (s.scene ? '' : ' mood') + (s.m < 0 ? ' (reduced)' : ''), d: (s.cap ? 'Toned down · ' : '') + ks.join(', '), v: Math.round(Math.abs(s.m) * 100) + '%', rng: [0, 200, Math.round(Math.abs(s.m) * 100), function(x) {
           s.m = (s.m < 0 ? -1 : 1) * x / 100
         }]
       };
     case 'flt':
       return {
-        c: 'look', t: fname(s.id) + ' filter', d: (s.cap ? 'Adjusted · ' : '') + P.FL.filter(function(f) {
+        c: 'look', t: fname(s.id) + ' filter', d: (s.cap ? 'Adjusted · ' : '') + (s.at ? 'Only the ' + s.at.map(function(k) {
+          return POSW[k]
+        }).join(' and ').replace(/ corner and (?=[a-z-]+ corner)/g, ' and ').replace(/corner$/, s.at.length > 1 && /corner/.test(POSW[s.at[0]]) ? 'corners' : 'corner') : P.FL.filter(function(f) {
           return f[0] === s.id
-        })[0][2], v: Math.round(s.s * 100) + '%', rng: [0, 100, Math.round(s.s * 100), function(x) {
+        })[0][2]), v: Math.round(s.s * 100) + '%', rng: [0, 100, Math.round(s.s * 100), function(x) {
           s.s = x / 100
+        }]
+      };
+    case 'text':
+      return {
+        c: 'look', t: 'Text “' + (s.t.s.length > 28 ? s.t.s.slice(0, 26) + '…' : s.t.s) + '”', d: s.t.f + (s.t.fx !== 'none' ? ' · ' + s.t.fx : '') + ' · edit it in the Text tab', v: ''
+      };
+    case 'ov':
+      return {
+        c: 'look', t: ovName(s.id) + ' overlay', d: 'Layered on top · more in the Overlays tab', v: Math.round(s.a * 100) + '%', rng: [0, 100, Math.round(s.a * 100), function(x) {
+          s.a = x / 100
+        }]
+      };
+    case 'ovrm':
+      return {
+        c: 'look', t: 'Remove ' + ovName(s.id).toLowerCase() + ' overlay', d: '', v: ''
+      };
+    case 'fr':
+      var frn = P.FR.filter(function(f) {
+        return f[0] === s.id
+      })[0];
+      return {
+        c: 'geo', t: frn ? frn[1] + ' frame' : 'No frame', d: frn ? 'Retro frame drawn over the edges' : 'Removes the frame', v: ''
+      };
+    case 'grade':
+      return {
+        c: 'color', t: 'Color grade', d: cap(s.lbl.join(' · ')), v: Math.round(s.m * 100) + '%', rng: [0, 200, Math.round(s.m * 100), function(x) {
+          s.m = x / 100
         }]
       };
     case 'crop':

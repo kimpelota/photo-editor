@@ -73,7 +73,7 @@ var curveCh = 'rgb',
     [255, 255]
   ],
   CURVE_COL = {
-    rgb: '#eceef3',
+    rgb: '#f2f2f2',
     r: '#ff5a5a',
     g: '#5ad76a',
     b: '#6a8cff'
@@ -121,6 +121,7 @@ function curveBox() {
 }
 
 function drawCurve() {
+  CURVE_COL.rgb = cssv('--tx');
   var B = curveBox(),
     c = B.c,
     x = c.getContext('2d'),
@@ -130,15 +131,15 @@ function drawCurve() {
   if (!c.offsetParent) return;
   x.setTransform(B.dpr, 0, 0, B.dpr, 0, 0);
   x.clearRect(0, 0, w, w);
-  x.fillStyle = '#101217';
+  x.fillStyle = cssv('--inp');
   x.fillRect(pad, pad, s, s);
   if (HIST) {
     x.save();
     x.translate(pad, pad);
-    plotHist(x, HIST[curveCh === 'rgb' ? 'l' : curveCh], s, s, 'rgba(255,255,255,.07)');
+    plotHist(x, HIST[curveCh === 'rgb' ? 'l' : curveCh], s, s, cssv('--sur3'));
     x.restore()
   }
-  x.strokeStyle = '#23262f';
+  x.strokeStyle = cssv('--line');
   x.lineWidth = 1;
   for (var i = 1; i < 4; i++) {
     x.beginPath();
@@ -148,7 +149,7 @@ function drawCurve() {
     x.lineTo(pad + s, pad + s * i / 4);
     x.stroke()
   }
-  x.strokeStyle = '#2e323d';
+  x.strokeStyle = cssv('--line2');
   x.beginPath();
   x.moveTo(pad, pad + s);
   x.lineTo(pad + s, pad);
@@ -165,7 +166,7 @@ function drawCurve() {
     x.arc(pad + p[0] / 255 * s, pad + s - p[1] / 255 * s, cDrag && cDrag.i === i ? 6 : 4.5, 0, 7);
     x.fillStyle = cDrag && cDrag.i === i && cDrag.out ? '#ff5a6e' : CURVE_COL[curveCh];
     x.fill();
-    x.strokeStyle = '#0a0b0e';
+    x.strokeStyle = cssv('--bg');
     x.lineWidth = 1.5;
     x.stroke()
   })
