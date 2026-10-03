@@ -22,7 +22,12 @@ function isMac() {
 // Step-by-step install instructions for the browser and device this is running on.
 function installSteps() {
   var ua = navigator.userAgent;
-  if (isIOS()) return ['Open this page in <b>Safari</b>.', 'Tap the <b>Share</b> button (the square with an arrow).', 'Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.'];
+  if (isIOS()) {
+    // Chrome, Firefox and Edge on iPhone can add to the Home Screen too (iOS 16.4+).
+    if (/CriOS|FxiOS|EdgiOS/.test(ua)) return ['Tap the <b>Share</b> button (the square with an arrow) next to the address bar, or in the <b>&middot;&middot;&middot;</b> menu.', 'Tap <b>Add to Home Screen</b> (scroll down or tap <b>More</b> if you don&rsquo;t see it).', 'Tap <b>Add</b>.'];
+    // Since iOS 26, Safari's default layout keeps Share inside the ••• menu.
+    return ['In <b>Safari</b>, tap the <b>&middot;&middot;&middot;</b> button at the bottom right, then tap <b>Share</b>. (If you see the Share button, the square with an arrow, just tap it.)', 'Scroll down and tap <b>Add to Home Screen</b>. If it isn&rsquo;t there, tap <b>View More</b> or <b>Edit Actions</b>.', 'Leave <b>Open as Web App</b> on, then tap <b>Add</b>.']
+  }
   if (/android/i.test(ua)) return ['Open this page in <b>Chrome</b>.', 'Tap the menu (<b>&#8942;</b>) at the top right.', 'Tap <b>Install app</b> (or <b>Add to Home screen</b>), then <b>Install</b>.'];
   if (/safari/i.test(ua) && !/chrome|chromium|edg/i.test(ua)) return ['In the menu bar at the very top of the screen, click <b>File</b>.', 'Click <b>Add to Dock&hellip;</b>, then <b>Add</b>.', 'Open it from the Dock or your Applications folder.'];
   return ['Click the install icon at the right end of the address bar, or open the browser menu (<b>&#8942;</b>).', 'Choose <b>Install Studio de Nuance</b>, then <b>Install</b>.'];
@@ -78,6 +83,29 @@ $('#bApp').onclick = function(e) {
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#appPop') && !e.target.closest('#bApp')) $('#appPop').classList.remove('on')
 });
+
+// On phones the top bar scrolls sideways, and iPhone Safari clips anything inside
+// a sideways-scrolling bar, even a fixed-position menu. So on narrow screens the
+// menus live directly in <body>, and go back under their buttons on wider screens.
+(function() {
+  var mq = matchMedia('(max-width: 760px)'),
+    pops = ['#histPop', '#themePop', '#appPop'].map(function(id) {
+      var el = $(id);
+      return {
+        el: el,
+        home: el.parentNode
+      }
+    });
+
+  function place() {
+    pops.forEach(function(p) {
+      var to = mq.matches ? document.body : p.home;
+      if (p.el.parentNode !== to) to.appendChild(p.el)
+    })
+  }
+  place();
+  mq.addEventListener ? mq.addEventListener('change', place) : mq.addListener(place)
+})();
 
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function(e) {
   console.warn('offline support unavailable', e)

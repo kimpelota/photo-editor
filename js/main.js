@@ -62,7 +62,7 @@ $('#bHist').onclick = function(e) {
   $('#histPop').classList.toggle('on')
 };
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.hwrap')) $('#histPop').classList.remove('on')
+  if (!e.target.closest('#histPop') && !e.target.closest('#bHist')) $('#histPop').classList.remove('on')
 });
 $('#bOpen').onclick = $('#upload').onclick = function() {
   $('#file').click()
