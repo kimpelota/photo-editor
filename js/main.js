@@ -179,16 +179,43 @@ $('#bExport').onclick = function() {
   if (!full) return;
   ex.s = S.up.on ? S.up.f : 1;
   expUI();
+  var g = $('#exGo');
+  if (!g.disabled) {
+    g.textContent = 'Download';
+    g.onclick = exportGo
+  }
   $('#expM').classList.add('on')
 };
 $('#exCancel').onclick = function() {
   if ($('#exGo').disabled) aiCancel();
-  $('#expM').classList.remove('on')
+  closeExport()
 };
 $('#expM').onclick = function(e) {
-  if (e.target === this) this.classList.remove('on')
+  if (e.target === this && !$('#exGo').disabled) closeExport()
 };
-$('#exGo').onclick = function() {
+function downloadBlob(blob, name) {
+  var a = document.createElement('a'),
+    u = URL.createObjectURL(blob);
+  a.href = u;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function() {
+    URL.revokeObjectURL(u)
+  }, 4000)
+}
+
+function closeExport() {
+  var b = $('#exGo');
+  $('#expM').classList.remove('on');
+  b.disabled = false;
+  b.textContent = 'Download';
+  b.onclick = exportGo
+}
+$('#exGo').onclick = exportGo;
+
+function exportGo() {
   var b = this;
   b.disabled = true;
   b.textContent = 'Rendering…';
@@ -214,27 +241,51 @@ $('#exGo').onclick = function() {
     putC(c, m);
     if (typeof paintTexts === 'function') paintTexts(c, st.texts || []);
     c.toBlob(function(blob) {
-      var a = document.createElement('a'),
-        u = URL.createObjectURL(blob);
-      a.href = u;
-      a.download = (fileName.replace(/\.[^.]+$/, '') || 'photo') + '-studio-de-nuance' + (ex.s > 1 ? '-' + ex.s + 'x' : '') + '.' + (ex.f === 'png' ? 'png' : 'jpg');
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function() {
-        URL.revokeObjectURL(u)
-      }, 4000);
+      c.width = c.height = 0; // let the phone free the canvas memory now
+      if (!blob) {
+        toast('Export failed: the photo is too large for this device. Try Original size.', 5000);
+        b.disabled = false;
+        b.textContent = 'Download';
+        return
+      }
+      var name = (fileName.replace(/\.[^.]+$/, '') || 'photo') + '-studio-de-nuance' + (ex.s > 1 ? '-' + ex.s + 'x' : '') + '.' + (ex.f === 'png' ? 'png' : 'jpg');
       toast('Exported ' + m.w + '×' + m.h + ' ' + ex.f.toUpperCase());
-      $('#expM').classList.remove('on');
-      b.disabled = false;
-      b.textContent = 'Download'
+      var file = null;
+      try {
+        file = new File([blob], name, {
+          type: blob.type
+        })
+      } catch (er) {}
+      // On phones, a download link leaves the editor (or does nothing in the
+      // installed app), so offer the share sheet instead: "Save Image" puts it in Photos.
+      // The share sheet needs a fresh tap, so the button waits for one.
+      if (LOWMEM && file && navigator.canShare && navigator.canShare({
+          files: [file]
+        })) {
+        b.disabled = false;
+        b.textContent = 'Save to Photos';
+        b.onclick = function() {
+          navigator.share({
+            files: [file]
+          }).then(function() {
+            closeExport()
+          }, function(er) {
+            if (er && er.name === 'AbortError') return; // the user closed the share sheet
+            downloadBlob(blob, name);
+            closeExport()
+          })
+        };
+        return
+      }
+      downloadBlob(blob, name);
+      closeExport()
     }, 'image/' + ex.f, ex.q / 100)
   }).catch(function(e) {
     toast(isAbort(e) ? 'Export cancelled' : 'Export failed: ' + e.message);
     b.disabled = false;
     b.textContent = 'Download'
   })
-};
+}
 
 /* boot */
 renderMine();

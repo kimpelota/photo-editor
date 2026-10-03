@@ -97,44 +97,88 @@ function getUpscaler(kind, f) {
 }
 
 // Upscales an already-edited image. `onProgress(0-1, label)`; rejects with name 'AbortError' if cancelled.
+// The photo goes through the model in tiles, and each tile's result is copied
+// into the output straight away. Asking the model for the whole photo at once
+// holds the full result as 32-bit floats twice over (hundreds of MB for a 16 MP
+// export), which is enough to make iPhone Safari reload the page.
+var AI_TILE = 256,
+  AI_OVERLAP = 12;
+
 function aiUpscale(m, u, onProgress, signal) {
   var input = P.aiPrep(m, u);
   onProgress && onProgress(0, aiLoaded[AI_LIBS[0]] ? 'Starting AI upscale…' : 'Downloading the AI upscaler (first time only)…');
   return getUpscaler(u.k, u.f).then(function(up) {
     var tf = window.tf,
-      t = tf.browser.fromPixels(new ImageData(input.d, input.w, input.h));
-    return up.execute(t, {
-      output: 'tensor',
-      patchSize: 128,
-      padding: 8,
-      awaitNextFrame: true,
-      signal: signal,
-      progress: function(p) {
-        onProgress && onProgress(p, 'AI upscaling ' + Math.round(p * 100) + '%')
+      W = input.w,
+      H = input.h,
+      f = u.f,
+      OW = W * f,
+      OH = H * f,
+      out = new Uint8ClampedArray(OW * OH * 4),
+      tiles = [];
+    for (var y = 0; y < H; y += AI_TILE)
+      for (var x = 0; x < W; x += AI_TILE) tiles.push([x, y, Math.min(AI_TILE, W - x), Math.min(AI_TILE, H - y)]);
+    var n = 0;
+
+    function one(tl) {
+      if (signal && signal.aborted) {
+        var e = new Error('Upscale cancelled');
+        e.name = 'AbortError';
+        return Promise.reject(e)
       }
-    }).then(function(res) {
-      t.dispose();
-      return res.data().then(function(px) {
-        var sh = res.shape,
-          h = sh[0],
-          w = sh[1],
-          d = new Uint8ClampedArray(w * h * 4);
-        for (var i = 0, j = 0; i < w * h; i++, j += 3) {
-          d[i * 4] = px[j];
-          d[i * 4 + 1] = px[j + 1];
-          d[i * 4 + 2] = px[j + 2];
-          d[i * 4 + 3] = 255
-        }
-        res.dispose();
-        return {
-          w: w,
-          h: h,
-          d: d
-        }
+      // Read a little past the tile edges so seams don't show, then keep only the middle.
+      var x0 = Math.max(0, tl[0] - AI_OVERLAP),
+        y0 = Math.max(0, tl[1] - AI_OVERLAP),
+        x1 = Math.min(W, tl[0] + tl[2] + AI_OVERLAP),
+        y1 = Math.min(H, tl[1] + tl[3] + AI_OVERLAP),
+        tw = x1 - x0,
+        th = y1 - y0,
+        buf = new Uint8ClampedArray(tw * th * 4);
+      for (var r = 0; r < th; r++) buf.set(input.d.subarray(((y0 + r) * W + x0) * 4, ((y0 + r) * W + x1) * 4), r * tw * 4);
+      var t = tf.browser.fromPixels(new ImageData(buf, tw, th));
+      return up.execute(t, {
+        output: 'tensor',
+        patchSize: 128,
+        padding: 8,
+        awaitNextFrame: true,
+        signal: signal
+      }).then(function(res) {
+        t.dispose();
+        return res.data().then(function(px) {
+          res.dispose();
+          var ow = tw * f,
+            ox = (tl[0] - x0) * f,
+            oy = (tl[1] - y0) * f,
+            cw = tl[2] * f,
+            ch = tl[3] * f;
+          for (var r = 0; r < ch; r++) {
+            var si = ((oy + r) * ow + ox) * 3,
+              di = ((tl[1] * f + r) * OW + tl[0] * f) * 4;
+            for (var c = 0; c < cw; c++, si += 3, di += 4) {
+              out[di] = px[si];
+              out[di + 1] = px[si + 1];
+              out[di + 2] = px[si + 2];
+              out[di + 3] = 255
+            }
+          }
+          n++;
+          onProgress && onProgress(n / tiles.length, 'AI upscaling ' + Math.round(n / tiles.length * 100) + '%')
+        })
+      }, function(e) {
+        t.dispose();
+        throw e
       })
-    }, function(e) {
-      t.dispose();
-      throw e
+    }
+    return tiles.reduce(function(p, tl) {
+      return p.then(function() {
+        return one(tl)
+      })
+    }, Promise.resolve()).then(function() {
+      return {
+        w: OW,
+        h: OH,
+        d: out
+      }
     })
   })
 }
@@ -157,7 +201,14 @@ function aiUpscaleCached(m, st, key, onProgress) {
     return finish(o)
   }, function(e) {
     if (aiCtl === ctl) aiCtl = null;
-    throw e
+    if (isAbort(e)) throw e;
+    // The AI model can't run on some phones and older browsers. Rather than
+    // failing, fall back to the classic upscaler so the button still works.
+    console.warn('AI upscale failed, using Lanczos', e);
+    toast('AI upscale isn’t available here, so the classic upscaler was used', 4500);
+    var u = clone(st.up);
+    u.k = 'lanczos';
+    return P.upscale(m, u)
   })
 }
 

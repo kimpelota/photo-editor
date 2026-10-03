@@ -31,7 +31,10 @@ function schedule(fast) {
     ai = up && isAI(st.up.k),
     useProxy = !!fast && !up && !!proxy,
     // The AI preview upscales the preview-size image; export does full resolution.
-    key = ai ? 'work' : up ? 'full' : useProxy ? 'proxy' : 'work';
+    // Phones preview a non-AI upscale on the preview-size image too; a full-size
+    // upscale on every change is more memory than iPhone Safari allows.
+    upFull = up && !ai && !LOWMEM,
+    key = upFull ? 'full' : useProxy ? 'proxy' : 'work';
   // While cropping, show the whole straightened frame so the crop box can move anywhere.
   if (tab === 'crop') {
     st = clone(st);
@@ -43,7 +46,7 @@ function schedule(fast) {
   if (useProxy) refineT = setTimeout(function() {
     schedule()
   }, 220);
-  var geoKey = up && !ai ? 'full' : 'work';
+  var geoKey = upFull ? 'full' : 'work';
   $('#busyT').textContent = up ? 'Upscaling ' + st.up.f + '×…' : 'Rendering…';
   $('#upProg i').style.width = '';
   var bt = setTimeout(function() {

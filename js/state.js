@@ -34,7 +34,7 @@ function fresh() {
       f: 2,
       sharp: 60,
       dn: 35,
-      k: 'ai-medium'
+      k: LOWMEM ? 'ai-slim' : 'ai-medium'
     }
   }
 }
@@ -80,6 +80,7 @@ function push(label) {
   });
   if (hist.length > 100) hist.shift();
   hix = hist.length - 1;
+  if (typeof sessionSaveSoon === 'function') sessionSaveSoon();
   if (plan && label.indexOf('AI:') !== 0) {
     plan = null;
     renderPlan()
@@ -91,6 +92,7 @@ function goto(i) {
   if (i < 0 || i >= hist.length) return;
   hix = i;
   S = JSON.parse(hist[i].s);
+  if (typeof sessionSaveSoon === 'function') sessionSaveSoon();
   plan = null;
   renderPlan();
   thumbsDirty = true;
@@ -357,6 +359,7 @@ function makeSample() {
 
 function loadSample() {
   var c = makeSample();
+  if (typeof sessionSetSource === 'function') sessionSetSource(null);
   setImage(c, c.width, c.height, 'lakeside-sunset.png')
 }
 
@@ -372,6 +375,7 @@ function loadFile(f) {
   var url = URL.createObjectURL(f),
     im = new Image();
   im.onload = function() {
+    if (typeof sessionSetSource === 'function') sessionSetSource(f);
     setImage(im, im.naturalWidth, im.naturalHeight, f.name);
     URL.revokeObjectURL(url);
     toast('Loaded ' + f.name)

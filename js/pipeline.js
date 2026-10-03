@@ -1,6 +1,17 @@
 /* ============================================================
    IMAGE PIPELINE (runs in a Web Worker and on the main thread)
    ============================================================ */
+// Phones and tablets get far less memory per tab than computers; iPhone Safari
+// reloads the page when it runs out, losing what's on screen.
+var LOWMEM = (function() {
+  try {
+    var n = navigator;
+    return /iPhone|iPad|iPod|Android/i.test(n.userAgent) || n.platform === 'MacIntel' && n.maxTouchPoints > 1 || !!n.deviceMemory && n.deviceMemory <= 4
+  } catch (e) {
+    return false
+  }
+})();
+
 function PIPE() {
   var C = function(v) {
     return v < 0 ? 0 : v > 255 ? 255 : v
