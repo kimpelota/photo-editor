@@ -770,12 +770,12 @@ function presetCard(name, v, mine, idx) {
       renderMine();
       return
     }
-    // Presets set the sliders; HSL and curves the user made stay unless the preset has its own.
-    var keepH = base().hsl,
-      keepC = base().curve;
+    // Presets set the sliders; HSL, curves, wheels and LUTs the user made stay unless the preset has its own.
+    var keep = base();
     S.layers[0].v = clone(v);
-    if (keepH && !v.hsl) S.layers[0].v.hsl = keepH;
-    if (keepC && !v.curve) S.layers[0].v.curve = keepC;
+    ['hsl', 'curve', 'wh', 'lut'].forEach(function(k) {
+      if (keep[k] && !v[k]) S.layers[0].v[k] = keep[k]
+    });
     presetOn = name;
     push('Preset: ' + name);
     schedule();

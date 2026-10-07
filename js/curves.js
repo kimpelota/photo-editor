@@ -2,7 +2,9 @@
    HISTOGRAM + CURVES
    ============================================================ */
 // Latest histogram of the rendered photo: 256 bins each for r, g, b and luma.
+// SCOPE_M is the rendered photo itself, for the other scopes (scopes.js).
 var HIST = null,
+  SCOPE_M = null,
   showHisto = true;
 
 function renderHist(m) {
@@ -26,6 +28,7 @@ function renderHist(m) {
     H.l[Math.round(.2126 * r + .7152 * g + .0722 * b)]++
   }
   HIST = H;
+  SCOPE_M = m;
   drawHisto();
   drawCurve()
 }
@@ -44,27 +47,6 @@ function plotHist(x, bins, w, h, fill) {
   x.closePath();
   x.fill()
 }
-
-function drawHisto() {
-  var c = $('#histC');
-  c.style.display = showHisto && HIST && work ? 'block' : 'none';
-  if (!showHisto || !HIST) return;
-  var x = c.getContext('2d'),
-    w = c.width,
-    h = c.height;
-  x.clearRect(0, 0, w, h);
-  x.globalCompositeOperation = 'lighter';
-  plotHist(x, HIST.r, w, h, 'rgba(255,70,70,.75)');
-  plotHist(x, HIST.g, w, h, 'rgba(70,220,90,.7)');
-  plotHist(x, HIST.b, w, h, 'rgba(80,120,255,.8)');
-  x.globalCompositeOperation = 'source-over'
-}
-
-$('#bHisto').onclick = function() {
-  showHisto = !showHisto;
-  this.classList.toggle('on', showHisto);
-  drawHisto()
-};
 
 /* ---------- curve editor ---------- */
 var curveCh = 'rgb',

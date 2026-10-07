@@ -20,6 +20,10 @@ function WORKER_MAIN() {
         C[q.key] = {};
         return
       }
+      if (q.type === 'lut') {
+        P.setLut(q.id, q.lut);
+        return
+      }
       if (q.type === 'seg') {
         AUX.seg = q.buf ? {
           w: q.w,
@@ -98,6 +102,16 @@ function sendSeg(g) {
     buf: g.d.slice().buffer
   } : {
     type: 'seg'
+  })
+}
+
+// A .cube LUT (see P.setLut) for renders here and in the worker; null removes it.
+function sendLut(id, L) {
+  P.setLut(id, L);
+  if (W) W.postMessage({
+    type: 'lut',
+    id: id,
+    lut: L
   })
 }
 

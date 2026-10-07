@@ -165,6 +165,7 @@ function setImage(src, w, h, name) {
   fileName = name;
   $('#upload').hidden = true;
   resetSeg();
+  if (typeof clearVersions === 'function') clearVersions();
   $('#fname').textContent = name + '  ·  ' + w + '×' + h + (full.w < w ? '  (editing at ' + full.w + '×' + full.h + ')' : '');
   S = fresh();
   hist = [];

@@ -140,7 +140,7 @@ function tool() {
 function cmpOn() {
   var T = tool();
   if (T && !T.noTool) return false;
-  return showSplit && (afterUp || hasEdits(vstate()))
+  return showSplit && (afterUp || !!cmpVer || hasEdits(vstate()))
 }
 
 function draw() {
@@ -174,7 +174,18 @@ function draw() {
     vctx.rect(R.x, R.y, Math.max(0, sx - R.x), R.h);
     vctx.clip();
     vctx.imageSmoothingEnabled = true;
-    vctx.drawImage(beforeC, R.x, R.y, R.w, R.h);
+    var bc = cmpVer ? cmpVer.c : beforeC;
+    if (bc) {
+      // A version with a different crop keeps its own shape, centred in the frame.
+      var k = Math.min(R.w / bc.width, R.h / bc.height),
+        bw = bc.width * k,
+        bh = bc.height * k;
+      if (cmpVer) {
+        vctx.fillStyle = '#000';
+        vctx.fillRect(R.x, R.y, R.w, R.h)
+      }
+      vctx.drawImage(bc, R.x + (R.w - bw) / 2, R.y + (R.h - bh) / 2, bw, bh)
+    }
     vctx.restore();
     var top = Math.max(R.y, 0),
       bot = Math.min(R.y + R.h, R.ch);
@@ -205,8 +216,8 @@ function draw() {
     ta.style.left = 'auto';
     ta.style.right = Math.max(8, R.cw - (R.x + R.w) + 10) + 'px';
     ta.style.top = Math.max(8, R.y + 10) + 'px';
-    tb.textContent = afterUp ? 'Original · ' + beforeC.width + '×' + beforeC.height : 'Before';
-    ta.textContent = afterUp ? 'Upscaled ' + vstate().up.f + '× · ' + afterC.width + '×' + afterC.height : 'After';
+    tb.textContent = cmpVer ? cmpVer.name + (cmpVer.c ? '' : ' · rendering…') : afterUp ? 'Original · ' + beforeC.width + '×' + beforeC.height : 'Before';
+    ta.textContent = cmpVer ? 'Current' : afterUp ? 'Upscaled ' + vstate().up.f + '× · ' + afterC.width + '×' + afterC.height : 'After';
     tb.style.opacity = split < .12 ? 0 : 1;
     ta.style.opacity = split > .88 ? 0 : 1
   } else tb.style.display = ta.style.display = 'none';

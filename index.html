@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<meta name="description" content="A photo editor with filters, masks, text and an offline AI editor.">
+<meta name="description" content="A photo editor with filters, masks, color wheels, LUTs, scopes, text, an offline AI editor and beat-synced example reels.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nuance">
@@ -17,14 +17,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Caveat:wght@400;700&family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Lobster&family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&family=Oswald:wght@400;700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,400;0,700;1,400;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap">
-<link rel="stylesheet" href="css/app.css?v=17">
+<link rel="stylesheet" href="css/app.css?v=18">
 </head>
 <body>
 <div class="app">
 <header>
   <div class="logo"><i></i>Studio de<span>Nuance</span></div>
   <div class="sep"></div>
-  <button class="btn" id="bOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>Open photo</button>
+  <button class="btn" id="bOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>Open photos</button>
   <button class="btn ghost" id="bSample">Sample</button>
   <div class="fname" id="fname"></div>
   <div class="grow"></div>
@@ -36,7 +36,7 @@
   <div class="hwrap"><button class="btn ghost" id="bTheme" title="Color scheme"><i class="thdot"></i>Theme</button><div class="pop thpop" id="themePop"></div></div>
   <div class="hwrap"><button class="btn ghost" id="bHist">History</button><div class="pop" id="histPop"></div></div>
   <button class="btn pri" id="bExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg>Export</button>
-  <input type="file" id="file" accept="image/*" hidden>
+  <input type="file" id="file" accept="image/*" multiple hidden>
 </header>
 <main>
   <nav class="rail" id="rail">
@@ -47,9 +47,11 @@
     <button class="tab" data-t="text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6V4.5h14V6M12 4.5v15M9 19.5h6"/></svg>Text</button>
     <button class="tab" data-t="presets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="M17 13v8M13 17h8"/></svg>Presets</button>
     <button class="tab" data-t="adjust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Adjust</button>
+    <button class="tab" data-t="versions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="12" height="14" rx="2"/><path d="M7 3h10a4 4 0 014 4v10"/><path d="M15 7v14M3 14h12" opacity=".5"/></svg>Versions</button>
     <button class="tab" data-t="masks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 010 17z" fill="currentColor" stroke="none"/></svg>Masks</button>
     <button class="tab" data-t="templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"/><rect x="8.5" y="6" width="7" height="7" rx="1"/><path d="M8.5 16h7M8.5 18.5h4"/></svg>Stories</button>
     <button class="tab" data-t="feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="9.5" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="16" y="9.5" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><rect x="9.5" y="16" width="5" height="5" rx="1"/></svg>Feed</button>
+    <button class="tab" data-t="outlines"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="13" height="14" rx="2"/><path d="M15.5 10l6-3.5v11l-6-3.5"/><path d="M5.5 9.5h7M5.5 12.5h5M5.5 15.5h6"/></svg>Reels</button>
     <button class="tab" data-t="crop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>Crop</button>
   </nav>
   <section class="stage" id="stage">
@@ -58,7 +60,7 @@
     <div class="tag b" id="tagB">Before</div><div class="tag a" id="tagA">After</div>
     <div class="busy" id="busy"><i></i><span id="busyT">Rendering</span></div>
     <div class="dims" id="dims"></div>
-    <canvas id="histC" class="histo" width="200" height="80" title="Histogram (H)"></canvas>
+    <div class="histo" id="scope"><div class="scseg" id="scopeM"><button data-s="hist" title="Histogram">Histo</button><button data-s="wave" title="Waveform: brightness across the photo">Wave</button><button data-s="parade" title="RGB parade: red, green and blue across the photo">Parade</button><button data-s="vec" title="Vectorscope: hue and saturation">Vector</button></div><canvas id="histC"></canvas></div>
     <div class="zbar">
       <button class="zstep" id="zOut" title="Zoom out (−)" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></button><button class="zl" id="zl" title="Zoom level. Click to fit the photo (0)">100%</button><button class="zstep" id="zIn" title="Zoom in (+)" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12M12 6v12"/></svg></button>
       <span class="vs"></span>
@@ -66,10 +68,15 @@
       <span class="vs"></span>
       <button id="bSplit" class="on" title="Before/after split (B)">Split</button>
       <button id="bLoupe" class="on" title="Zoom loupe (L)">Loupe</button>
-      <button id="bHisto" class="on" title="Histogram (H)">Histogram</button>
+      <button id="bHisto" class="on" title="Scopes: histogram, waveform, parade, vectorscope (H)">Scopes</button>
     </div>
-    <div class="drop" id="drop">Drop a photo to start editing</div>
-    <button class="upload" id="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg><b>Click Here to Upload</b><span>or drop a photo anywhere</span></button>
+    <div class="strip" id="strip" hidden>
+      <div class="strip-h"><b>Photo set</b><span id="stripN"></span><span class="hint">&#91; &#93; to switch</span></div>
+      <div class="strip-row" id="stripRow"></div>
+      <div class="strip-act"><button class="btn ghost" id="setSync" title="Copy this photo's edits (not text or AI masks) to every photo in the set">Apply edits to all</button><button class="btn ghost" id="setExport" title="Download every photo with its own edits, in the format chosen in Export">Export all</button><button class="btn pri" id="setReel" title="Put every edited photo into Reel Studio">Make a reel</button></div>
+    </div>
+    <div class="drop" id="drop">Drop photos to start editing</div>
+    <button class="upload" id="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg><b>Click Here to Upload</b><span>Pick one photo or a whole set, or drop them anywhere</span></button>
   </section>
   <aside class="panel" id="panel">
     <!-- ENHANCE / UPSCALE -->
@@ -223,10 +230,44 @@
       <div class="row" style="margin-top:12px"><button class="btn" id="bCropReset">Reset crop</button><button class="btn pri" id="bCropDone">Done</button></div>
       <div class="tip">The whole photo shows while this tab is open. <kbd>Enter</kbd> finishes.</div>
     </div>
+    <!-- VIDEO OUTLINES -->
+    <div class="pane" data-p="outlines">
+      <div class="ph"><h2>Reels &amp; Video Ideas</h2><p>Ready-made structures for Reels, TikToks, Shorts and YouTube. Add your photos, open any outline and play it as a beat-synced example reel with captions and music.</p></div>
+      <div class="card hero restudio"><h3>Reel Studio <small>New</small></h3><p>Make a real reel: photos and videos on a timeline, trim, split, speed, filters, text, captions, music, voiceover, transitions, beat sync and templates. Exports a video ready for Instagram.</p><button class="btn pri" id="reOpenBtn">Open Reel Studio</button></div>
+      <div class="vphbox">
+        <div class="vph-h"><b>Your photos</b><span id="vphN"></span></div>
+        <div class="vstrip" id="vphStrip"></div>
+        <div class="row vph-act"><button class="btn" id="vphAdd">Add photos&hellip;</button><button class="btn ghost" id="vphCur" title="Add the photo you're editing, with your edits">+ Current edit</button><button class="btn ghost" id="vphSet" hidden title="Add every photo in your set, with their edits">+ Photo set</button><button class="btn ghost" id="vphClear" hidden>Clear</button></div>
+        <p class="hint">Drop photos here. Every example video cuts between them in this order. Drag to reorder.</p>
+        <input type="file" id="vphFile" accept="image/*" multiple hidden>
+      </div>
+      <div class="save"><input id="olQ" type="search" placeholder="Search outlines, e.g. wedding, recipe, hook" aria-label="Search outlines"></div>
+      <div class="chips" id="olCats"></div>
+      <div class="hint ol-n" id="olN"></div>
+      <div class="ollist" id="olList"></div>
+    </div>
+    <!-- VERSIONS -->
+    <div class="pane" data-p="versions">
+      <div class="ph"><h2>Versions</h2><p>Save this edit as a version, try another look, then compare the two side by side.</p></div>
+      <div class="save vsave"><input id="verName" placeholder="Version name (optional)" maxlength="40"><button class="btn pri" id="bVerSave">Save version</button></div>
+      <button class="btn" id="bCmpOff" hidden>Stop comparing</button>
+      <div class="vlist" id="verList"></div>
+      <div class="tip">Compare puts the version on the left of the split and your current edit on the right. Drag the handle to wipe between them. <kbd>V</kbd> saves a version &middot; <kbd>Esc</kbd> stops comparing &middot; <kbd>B</kbd> split</div>
+    </div>
     <!-- ADJUST -->
     <div class="pane" data-p="adjust">
       <div class="ph"><h2>Adjust</h2><p>Fine-tune everything. Double-click a slider to reset it.</p></div>
       <div id="adjBox"></div>
+      <div class="grp">Color wheels</div>
+      <div class="wheels" id="wheels"></div>
+      <div id="wheelSl"></div>
+      <div class="row curve-foot"><span class="hint">Drag a wheel to tint &middot; <kbd>Shift</kbd> for fine &middot; double-click resets</span><button class="btn ghost" id="bWheelReset">Reset</button></div>
+      <div class="grp">LUT</div>
+      <div class="chips" id="lutC"></div>
+      <div id="lutSl"></div>
+      <div class="row lut-foot"><button class="btn" id="bLutImp">Import .cube&hellip;</button><button class="btn ghost" id="bLutDel" hidden>Remove from library</button></div>
+      <input type="file" id="lutFile" multiple hidden>
+      <p class="hint lut-hint">Use the same .cube LUTs as Premiere, Resolve and Final Cut. You can also drop them on the photo. Imported LUTs stay in this browser.</p>
       <div class="grp">Curves</div>
       <div class="seg" id="curveCh"><button data-c="rgb">RGB</button><button data-c="r">Red</button><button data-c="g">Green</button><button data-c="b">Blue</button></div>
       <canvas id="curveC" class="curve"></canvas>
@@ -239,7 +280,80 @@
   </aside>
 </main>
 </div>
+<div class="red" id="reelEd" hidden>
+  <header class="red-top">
+    <button class="btn ghost" id="reBack">&larr; Back</button>
+    <div class="red-title"><b>Reel Studio</b><span id="reLen">0:00.0</span><em id="reSaved"></em></div>
+    <div class="grow"></div>
+    <button class="ibtn" id="reUndo" title="Undo (Ctrl/Cmd+Z)" aria-label="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg></button>
+    <button class="ibtn" id="reRedo" title="Redo (Shift+Ctrl/Cmd+Z)" aria-label="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
+    <button class="btn ghost" id="reNew">New</button>
+    <button class="btn pri" id="reExport">Export</button>
+  </header>
+  <div class="red-main">
+    <aside class="red-bin">
+      <div class="red-h"><b>Media</b><button class="btn" data-act="add">+ Add</button></div>
+      <div class="red-media" id="reMedia"></div>
+      <p class="hint" id="reBinEmpty">Add photos, videos or a song. You can pick many at once or drop a whole folder’s worth. Click one to put it at the end, or drag it onto the timeline.</p>
+      <p class="hint red-pick">Pick the media to swap in.</p>
+      <input type="file" id="reFile" accept="image/*,video/*,audio/*" multiple hidden>
+      <input type="file" id="reSong" accept="audio/*" hidden>
+    </aside>
+    <section class="red-stage">
+      <div class="red-phone"><canvas id="reC" width="1080" height="1920"></canvas><canvas id="reG" class="vguide"></canvas></div>
+      <div class="red-play">
+        <button class="ibtn" id="rePlay" aria-label="Play or pause" title="Play/pause (Space)">&#9654;</button>
+        <span id="reTime">0:00.0 / 0:00.0</span>
+        <button class="ibtn vtog on" id="reMute" aria-label="Sound" title="Preview sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg></button>
+        <button class="ibtn vtog" id="reSafe" aria-label="Safe zones" title="Show where Instagram's buttons cover the reel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"/><rect x="8.5" y="6" width="7" height="8" stroke-dasharray="2 2"/></svg></button>
+      </div>
+    </section>
+    <aside class="red-insp" id="reInsp"></aside>
+  </div>
+  <div class="red-tools" id="reTools">
+    <button data-act="media" class="red-mtog">&#9638; Media</button>
+    <button data-act="text">Aa Text</button>
+    <button data-act="caps">CC Captions</button>
+    <button data-act="audio">&#9835; Audio</button>
+    <button data-act="vo">&#127908; Voiceover</button>
+    <span class="vs"></span>
+    <button data-act="split" title="Split at playhead (S)">&#9986; Split</button>
+    <button data-act="dup" title="Duplicate (D)">&#10697; Duplicate</button>
+    <button data-act="del" title="Delete (Del)">&#128465; Delete</button>
+    <span class="vs"></span>
+    <button data-act="beat" title="Snap cuts to the music's beat">&#9833; Sync to beat</button>
+    <button data-act="tpl">&#9636; Templates</button>
+    <button data-act="cover">&#9635; Cover</button>
+  </div>
+  <div class="red-tl">
+    <div class="red-lanes"><span class="hint">Drag clips to reorder &middot; drag edges to trim &middot; click the &#9671; between clips for transitions</span><label title="Timeline zoom">Zoom <input type="range" id="reZoom" min="20" max="200" value="60" aria-label="Timeline zoom"></label></div>
+    <div class="red-scroll" id="reScroll"><div class="red-inner" id="reInner">
+      <div class="red-ruler" id="reRuler"></div>
+      <div class="red-track v" id="reTrV" data-l="Clips"></div>
+      <div class="red-track t" id="reTrT" data-l="Text"></div>
+      <div class="red-track c" id="reTrC" data-l="Captions"></div>
+      <div class="red-track a" id="reTrA" data-l="Audio"></div>
+      <div class="red-ph" id="rePH"></div>
+    </div></div>
+  </div>
+  <div class="modal" id="reExpM"><div class="mbox">
+    <h3>Export reel</h3><p id="reExpMsg"></p>
+    <div class="row" style="margin-top:14px"><button class="btn pri" data-res="1080">1080p</button><button class="btn" data-res="720">720p (smaller)</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="reShare" hidden>Share to Instagram&hellip;</button><button class="btn ghost" id="reExpClose">Close</button></div>
+  </div></div>
+</div>
 <div class="toast" id="toast"></div>
+<div class="modal" id="vidM"><div class="mbox vbox">
+  <div class="vhead"><div><h3 id="vidT"></h3><p id="vidSub"></p></div><button class="ibtn" id="vidClose" aria-label="Close" title="Close (Esc)">&times;</button></div>
+  <div class="vstage"><div class="vframe" id="vidFrame"><canvas id="vidC"></canvas><canvas id="vidG" class="vguide"></canvas></div></div>
+  <div class="vctl"><button class="ibtn" id="vidPlay" aria-label="Play or pause" title="Play/pause (Space)">&#9654;</button><input type="range" id="vidSeek" min="0" max="1000" value="0" aria-label="Seek"><span id="vidTime">0:00</span><button class="ibtn vtog" id="vidSnd" aria-label="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path class="w" d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/><path class="x" d="M16 9l6 6M22 9l-6 6"/></svg></button><button class="ibtn vtog" id="vidSafe" aria-label="Instagram safe zones" title="Show where Instagram's buttons and caption cover the video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"/><rect x="8.5" y="6" width="7" height="8" stroke-dasharray="2 2"/></svg></button></div>
+  <div class="vrow"><span class="lbl">Captions</span><div class="chips" id="vidCap"></div></div>
+  <div class="vph-h vph-m"><b>Photos in this video</b><span id="vidPh"></span></div>
+  <div class="vstrip" id="vidStrip"></div>
+  <ol class="olb vbeats" id="vidBeats"></ol>
+  <div class="olx">Real examples: <a id="vidYT" target="_blank" rel="noopener">YouTube</a> &middot; <a id="vidTT" target="_blank" rel="noopener">TikTok</a></div>
+  <div class="row" style="margin-top:12px"><button class="btn" id="vidDl">Download video</button><button class="btn pri" id="vidUse">Edit in Reel Studio</button></div>
+</div></div>
 <div class="modal" id="expM"><div class="mbox">
   <h3>Export photo</h3><p>Renders every edit at full resolution.</p>
   <div class="lbl">Format</div><div class="seg" id="exF"><button data-v="png" class="on">PNG</button><button data-v="jpeg">JPEG</button></div>
@@ -250,24 +364,31 @@
   <div class="batch"><b>Batch export</b><p>Apply these edits to other photos and download them all, in the format and size above. AI subject, background and face masks are skipped.</p><button class="btn" id="exBatch">Choose photos&hellip;</button><input type="file" id="batchFile" accept="image/*" multiple hidden></div>
 </div></div>
 
-<script src="js/pipeline.js?v=17"></script>
-<script src="js/worker.js?v=17"></script>
-<script src="js/state.js?v=17"></script>
-<script src="js/view.js?v=17"></script>
-<script src="js/panes.js?v=17"></script>
-<script src="js/parser.js?v=17"></script>
-<script src="js/ai-pane.js?v=17"></script>
-<script src="js/curves.js?v=17"></script>
-<script src="js/crop.js?v=17"></script>
-<script src="js/segment.js?v=17"></script>
-<script src="js/upscale-ai.js?v=17"></script>
-<script src="js/masks.js?v=17"></script>
-<script src="js/claude.js?v=17"></script>
-<script src="js/main.js?v=17"></script>
-<script src="js/pro.js?v=17"></script>
-<script src="js/text.js?v=17"></script>
-<script src="js/theme.js?v=17"></script>
-<script src="js/install.js?v=17"></script>
-<script src="js/session.js?v=17"></script>
+<script src="js/pipeline.js?v=18"></script>
+<script src="js/worker.js?v=18"></script>
+<script src="js/state.js?v=18"></script>
+<script src="js/view.js?v=18"></script>
+<script src="js/panes.js?v=18"></script>
+<script src="js/parser.js?v=18"></script>
+<script src="js/ai-pane.js?v=18"></script>
+<script src="js/curves.js?v=18"></script>
+<script src="js/scopes.js?v=18"></script>
+<script src="js/grade.js?v=18"></script>
+<script src="js/crop.js?v=18"></script>
+<script src="js/segment.js?v=18"></script>
+<script src="js/upscale-ai.js?v=18"></script>
+<script src="js/masks.js?v=18"></script>
+<script src="js/claude.js?v=18"></script>
+<script src="js/main.js?v=18"></script>
+<script src="js/pro.js?v=18"></script>
+<script src="js/text.js?v=18"></script>
+<script src="js/versions.js?v=18"></script>
+<script src="js/outlines.js?v=18"></script>
+<script src="js/reels.js?v=18"></script>
+<script src="js/reel-editor.js?v=18"></script>
+<script src="js/photoset.js?v=18"></script>
+<script src="js/theme.js?v=18"></script>
+<script src="js/install.js?v=18"></script>
+<script src="js/session.js?v=18"></script>
 </body>
 </html>

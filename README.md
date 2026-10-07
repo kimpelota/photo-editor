@@ -2,6 +2,26 @@
 
 A photo editor that runs in your browser: filters, adjustments, masks (including AI subject, background and face masks, and the B&W Window), text, overlays, story templates and an offline AI editor.
 
+Pro color tools borrowed from video editors:
+
+- **Color wheels:** lift, gamma and gain, like DaVinci Resolve.
+- **LUTs:** import `.cube` files from Premiere, Resolve or Final Cut. They stay in your browser.
+- **Scopes:** histogram, waveform, RGB parade and vectorscope.
+- **Versions:** save looks and compare any one against your current edit with the split view.
+
+**Reel Studio:** a reel editor modelled on Instagram's Reels and Edits tools:
+
+- Photos and videos on a timeline: drag to reorder, trim from either edge, slip, split, duplicate, replace.
+- Per clip: speed (0.3–3×), volume, the app's filters, adjust and mirror.
+- 10 transitions with optional sound effects.
+- Text in eight Instagram-style fonts, with colors, highlight boxes, outline and six animations.
+- Word-by-word captions, typed or made live from a voiceover in Chrome and Edge.
+- Built-in beats or your own song (pick the part you want), with tempo detection and "sync cuts to beat".
+- Templates from every outline, a cover image, autosaved drafts, undo and redo.
+- Export as 1080p or 720p video, with the system share sheet where the browser supports it.
+
+**Reels:** 60+ video edit outlines (Instagram Reels, TikTok, Shorts, YouTube). Each one plays as a beat-synced example reel made from your own photos, with trending transitions, word-by-word captions, a synthesized soundtrack and Instagram safe-zone guides. You can download it as a video.
+
 **Use it:** https://kimpelota.github.io/photo-editor/
 
 ## Mac app

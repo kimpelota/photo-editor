@@ -12,7 +12,10 @@ $$('.tab').forEach(function(b) {
       p.classList.toggle('on', p.dataset.p === tab)
     });
     if (tab === 'filters') renderFilterGrid();
-    if (tab === 'adjust') drawCurve();
+    if (tab === 'adjust') {
+      drawCurve();
+      drawWheels()
+    }
     if (tab === 'crop') syncCrop();
     if (tab === 'masks') renderMasks();
     refreshThumbs();
@@ -52,6 +55,7 @@ function syncUI() {
     }
   });
   syncCurves();
+  syncGrade();
   if (tab === 'masks') renderMasks();
   updDims()
 }
@@ -68,7 +72,7 @@ $('#bOpen').onclick = $('#upload').onclick = function() {
   $('#file').click()
 };
 $('#file').onchange = function() {
-  loadFile(this.files[0]);
+  setAdd(Array.prototype.slice.call(this.files));
   this.value = ''
 };
 $('#bSample').onclick = function() {
@@ -94,7 +98,9 @@ stage.addEventListener('drop', function(e) {
   e.preventDefault();
   dc = 0;
   $('#drop').classList.remove('on');
-  loadFile(e.dataTransfer.files[0])
+  var fs = Array.prototype.slice.call(e.dataTransfer.files);
+  if (fs.length && fs.every(isCube)) importCubes(fs);
+  else setAdd(fs)
 });
 document.addEventListener('keydown', function(e) {
   var typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'range';
@@ -120,6 +126,8 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'b' || e.key === 'B') $('#bSplit').click();
   if (e.key === 'l' || e.key === 'L') $('#bLoupe').click();
   if (e.key === 'h' || e.key === 'H') $('#bHisto').click();
+  if ((e.key === 'v' || e.key === 'V') && work) saveVersion();
+  if (e.key === 'Escape' && cmpVer) compareVersion(null);
   if ((e.key === 'o' || e.key === 'O') && tab === 'masks') $('#ovSw').click();
   if (e.key === 'Enter' && tab === 'crop') $('#bCropDone').click();
   if (e.key === 'Escape') $('#expM').classList.remove('on')

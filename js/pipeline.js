@@ -306,6 +306,82 @@ function PIPE() {
     return m
   }
 
+  // Lift / gamma / gain colour wheels, like DaVinci Resolve's primaries.
+  // wh = {lift, gamma, gain}, each [x, y, master]: x and y place the wheel's
+  // puck on the vectorscope (x = blue-yellow, y = red-cyan), master is -100..100.
+  function wheelRGB(w) {
+    var cb = w[0] || 0,
+      cr = w[1] || 0;
+    return [1.5748 * cr, -.1873 * cb - .4681 * cr, 1.8556 * cb]
+  }
+
+  function wheels(m, wh) {
+    var A = wheelRGB(wh.lift || []),
+      G = wheelRGB(wh.gamma || []),
+      N = wheelRGB(wh.gain || []),
+      ml = ((wh.lift || [])[2] || 0) / 100,
+      mg = ((wh.gamma || [])[2] || 0) / 100,
+      mn = ((wh.gain || [])[2] || 0) / 100,
+      T = [0, 1, 2].map(function(c) {
+        var l = A[c] * .1 + ml * .25,
+          e = Math.pow(2, -(G[c] * .3 + mg * .7)),
+          g = 1 + N[c] * .25 + mn * .5,
+          t = new Float32Array(256);
+        for (var i = 0; i < 256; i++) {
+          var x = i / 255,
+            y = g * (x + l * (1 - x));
+          t[i] = Math.pow(y < 0 ? 0 : y, e) * 255
+        }
+        return t
+      });
+    return luts(m, T[0], T[1], T[2])
+  }
+
+  // 3D LUTs loaded from .cube files, by id. Each is {n, d}: n³ RGB entries
+  // (0-1, red changing fastest). Set with setLut() in the worker and main thread.
+  var LUTS = {};
+
+  function setLut(id, L) {
+    if (L) LUTS[id] = L;
+    else delete LUTS[id]
+  }
+
+  function cube(m, L, amt) {
+    var n = L.n,
+      t = L.d,
+      I = new Int32Array(256),
+      F = new Float32Array(256),
+      d = m.d,
+      n2 = n * n;
+    for (var v = 0; v < 256; v++) {
+      var p = v / 255 * (n - 1),
+        i0 = Math.min(n - 2, Math.floor(p));
+      I[v] = i0;
+      F[v] = p - i0
+    }
+    for (var i = 0; i < d.length; i += 4) {
+      var r = d[i],
+        g = d[i + 1],
+        b = d[i + 2],
+        fr = F[r],
+        fg = F[g],
+        fb = F[b],
+        o = (I[r] + I[g] * n + I[b] * n2) * 3;
+      for (var c = 0; c < 3; c++) {
+        var k = o + c,
+          c00 = t[k] + (t[k + 3] - t[k]) * fr,
+          c10 = t[k + n * 3] + (t[k + n * 3 + 3] - t[k + n * 3]) * fr,
+          c01 = t[k + n2 * 3] + (t[k + n2 * 3 + 3] - t[k + n2 * 3]) * fr,
+          c11 = t[k + (n2 + n) * 3] + (t[k + (n2 + n) * 3 + 3] - t[k + (n2 + n) * 3]) * fr,
+          c0 = c00 + (c10 - c00) * fg,
+          y = (c0 + (c01 + (c11 - c01) * fg - c0) * fb) * 255,
+          x = d[i + c];
+        d[i + c] = x + (y - x) * amt
+      }
+    }
+    return m
+  }
+
   function satm(m, k) {
     return each(m, function(r, g, b, o) {
       var y = L(r, g, b);
@@ -769,8 +845,10 @@ function PIPE() {
         d[i + 2] = b
       }
     }
+    if (v.wh) wheels(m, v.wh);
     if (v.curve) curveAdj(m, v.curve);
     if (v.hsl) hslAdj(m, v.hsl);
+    if (v.lut && LUTS[v.lut.id]) cube(m, LUTS[v.lut.id], v.lut.amt == null ? 1 : v.lut.amt);
     var cl = g('clarity');
     if (cl) clarity(m, cl);
     var gl = g('glow');
@@ -3455,6 +3533,7 @@ function PIPE() {
     copy: cp,
     upSize: upSize,
     curve: curve,
+    setLut: setLut,
     MAX_PX: MAX_PX,
     analyze: analyze,
     resample: resample,
