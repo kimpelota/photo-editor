@@ -40,6 +40,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.photography</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>NSMicrophoneUsageDescription</key><string>Reel Studio records voiceovers with your microphone.</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
 </dict></plist>
 PLIST

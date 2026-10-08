@@ -3098,7 +3098,13 @@ body.re-on {
   background: var(--bg);
   color: var(--tx);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  /* The timeline can be far wider than the window; it scrolls instead of widening the page. */
+  grid-template-columns: minmax(0, 1fr)
+}
+
+.red>* {
+  min-width: 0
 }
 
 .red[hidden] {
@@ -3384,19 +3390,6 @@ body.re-on {
 .red-track {
   position: relative;
   margin-top: 4px
-}
-
-.red-track::before {
-  content: attr(data-l);
-  position: sticky;
-  left: 0;
-  z-index: 3;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--dim);
-  pointer-events: none
 }
 
 .red-track.v {

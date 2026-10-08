@@ -42,6 +42,8 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
     cfg.userContentController.addUserScript(WKUserScript(
       source: "window.NUANCE_APP = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
     cfg.userContentController.add(self, name: "nuance")
+    // Reel Studio plays videos and its soundtrack from its own timeline, not from a click.
+    cfg.mediaTypesRequiringUserActionForPlayback = []
     web = WKWebView(frame: .zero, configuration: cfg)
     web.uiDelegate = self
     web.navigationDelegate = self
@@ -111,14 +113,24 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
     }
   }
 
-  // "Open photo": the file picker.
+  // File pickers: photos, plus videos and songs for Reel Studio and .cube LUTs.
+  // The page checks what each picker accepts.
   func webView(_ w: WKWebView, runOpenPanelWith p: WKOpenPanelParameters, initiatedByFrame f: WKFrameInfo,
                completionHandler done: @escaping ([URL]?) -> Void) {
     let panel = NSOpenPanel()
     panel.allowsMultipleSelection = p.allowsMultipleSelection
     panel.canChooseDirectories = false
-    panel.allowedContentTypes = [.image]
+    var types: [UTType] = [.image, .movie, .audio]
+    if let cube = UTType(filenameExtension: "cube") { types.append(cube) }
+    panel.allowedContentTypes = types
     panel.beginSheetModal(for: window) { r in done(r == .OK ? panel.urls : nil) }
+  }
+
+  // Microphone for Reel Studio voiceovers. macOS still asks the user the first time.
+  @available(macOS 12.0, *)
+  func webView(_ w: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame f: WKFrameInfo,
+               type: WKMediaCaptureType, decisionHandler done: @escaping (WKPermissionDecision) -> Void) {
+    done(type == .microphone ? .grant : .deny)
   }
 
   // Links that leave the app (GitHub, the website) open in the default browser.
@@ -138,30 +150,43 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
     done(.allow)
   }
 
-  // NUANCE_SELFTEST=1: print what loaded, then quit (used to check a build).
+  // NUANCE_SELFTEST=1: runs each step's JavaScript, prints the result, then quits
+  // (used to check a build). NUANCE_SNAP=<folder> also saves a screenshot after each step.
+  let selftest: [(String, String, Double)] = [
+    ("load", "[document.title, typeof PIPE, typeof renderMasks, (window.P && P.FL.length), typeof W, !!document.querySelector('#bApp'), (renderAppPop(), document.querySelector('#appPop').textContent.slice(0, 60))].join(' | ')", 0),
+    ("photo", "document.querySelector('#bSample').click(); 1", 4),
+    ("mask", "addMask('window'); [afterC.width + 'x' + afterC.height, S.masks.map(function(m){return m.type}).join(',')].join(' | ')", 3),
+    ("icons", "(function(){var was=themeNow(),o=THEMES.map(function(t){setTheme(t[0]);return drawThemeIcon(256,true).toDataURL().length});setTheme(was);return JSON.stringify(o)})()", 1),
+    ("media", "[typeof MediaRecorder, vidRecType(), 'secure=' + window.isSecureContext, 'mic=' + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), 'audio=' + !!(window.AudioContext || window.webkitAudioContext), 'idb=' + !!window.indexedDB].join(' | ')", 0),
+    ("grade", "document.querySelector('.tab[data-t=adjust]').click(); setWheel('gain',[0.4,0.2,10]); schedule(); [typeof parseCube, !!document.querySelector('#wheels canvas')].join(' | ')", 2),
+    ("example", "closeVid(); document.querySelector('.tab[data-t=outlines]').click(); openVid(2); 'opened'", 3),
+    ("example-play", "[VID.t.toFixed(2), VID.on, VID.plan.clips, VID.c.width + 'x' + VID.c.height].join(' | ')", 0),
+    ("studio", "closeVid(); reOpen(function(){ reTemplate(0) }); 'opening'", 3),
+    ("studio-state", "[RE.proj.clips.length, reDur().toFixed(1) + 's', RE.proj.texts.length + ' texts', RE.proj.caps.words.length + ' words', JSON.stringify(RE.proj.music), $('#reelEd').hidden].join(' | ')", 0),
+    ("studio-play", "RE.t = 1.2; rePlay(true); 'playing'", 2),
+    ("studio-after", "rePlay(false); [RE.t.toFixed(2), RE.hit.length + ' text boxes'].join(' | ')", 1),
+    ("studio-text", "RE.sel = null; reAct('text'); RE.panel = null; reRenderAll(); [RE.proj.texts.length, !!document.querySelector('#riTxt')].join(' | ')", 1),
+    ("set", "reClose(); [typeof setAdd, SET.length, !!document.querySelector('#strip')].join(' | ')", 1)
+  ]
+
   func webView(_ w: WKWebView, didFinish n: WKNavigation!) {
     guard ProcessInfo.processInfo.environment["NUANCE_SELFTEST"] != nil else { return }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-      let js = "[document.title, typeof PIPE, typeof renderMasks, typeof addMask, (window.P && P.FL.length), typeof W, !!document.querySelector('#bApp'), (renderAppPop(), document.querySelector('#appPop').textContent.slice(0, 60))].join(' | ')"
-      w.evaluateJavaScript(js) { r, e in
-        print("SELFTEST", r ?? "nil", e.map { "\($0)" } ?? "")
-        // load the sample photo, add a B&W Window mask, and check it rendered
-        w.evaluateJavaScript("document.querySelector('#bSample').click(); 1") { _, _ in
-          DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            w.evaluateJavaScript("addMask('window'); 1") { _, _ in
-              DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                w.evaluateJavaScript("[afterC.width + 'x' + afterC.height, S.masks.map(function(m){return m.type}).join(','), document.querySelector('#busy').className].join(' | ')") { r, e in
-                  print("SELFTEST photo", r ?? "nil", e.map { "\($0)" } ?? "")
-                  // draw the icon in every theme (then put the theme back)
-                  let icons = "(function(){var was=themeNow(),o=THEMES.map(function(t){setTheme(t[0]);return drawThemeIcon(256,true).toDataURL()});setTheme(was);return JSON.stringify(o)})()"
-                  w.evaluateJavaScript(icons) { r, e in
-                    print("SELFTEST icons", r ?? "nil", e.map { "\($0)" } ?? "")
-                    NSApp.terminate(nil)
-                  }
-                }
-              }
-            }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3) { self.runStep(0) }
+  }
+
+  func runStep(_ i: Int) {
+    guard i < selftest.count else { NSApp.terminate(nil); return }
+    let (name, js, wait) = selftest[i]
+    web.evaluateJavaScript(js) { r, e in
+      DispatchQueue.main.asyncAfter(deadline: .now() + wait) {
+        print("SELFTEST", name, r.map { "\($0)" } ?? "nil", e.map { "ERROR \($0)" } ?? "")
+        guard let dir = ProcessInfo.processInfo.environment["NUANCE_SNAP"] else { return self.runStep(i + 1) }
+        self.web.takeSnapshot(with: nil) { img, _ in
+          if let img = img, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+             let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("\(i)-\(name).png"))
           }
+          self.runStep(i + 1)
         }
       }
     }
