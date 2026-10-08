@@ -75,10 +75,6 @@ $('#file').onchange = function() {
   setAdd(Array.prototype.slice.call(this.files));
   this.value = ''
 };
-$('#bSample').onclick = function() {
-  loadSample();
-  toast('Sample photo loaded')
-};
 var dc = 0;
 stage.addEventListener('dragenter', function(e) {
   e.preventDefault();

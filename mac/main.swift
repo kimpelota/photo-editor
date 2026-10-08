@@ -154,10 +154,10 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
   // (used to check a build). NUANCE_SNAP=<folder> also saves a screenshot after each step.
   let selftest: [(String, String, Double)] = [
     ("load", "[document.title, typeof PIPE, typeof renderMasks, (window.P && P.FL.length), typeof W, !!document.querySelector('#bApp'), (renderAppPop(), document.querySelector('#appPop').textContent.slice(0, 60))].join(' | ')", 0),
-    ("photo", "document.querySelector('#bSample').click(); 1", 4),
+    ("photo", "(function(){var c=document.createElement('canvas');c.width=900;c.height=560;var x=c.getContext('2d'),g=x.createLinearGradient(0,0,900,560);g.addColorStop(0,'#1b2350');g.addColorStop(1,'#ffc27a');x.fillStyle=g;x.fillRect(0,0,900,560);x.fillStyle='#2a2138';x.fillRect(200,300,300,200);setImage(c,900,560,'selftest.png');return 1})()", 4),
     ("mask", "addMask('window'); [afterC.width + 'x' + afterC.height, S.masks.map(function(m){return m.type}).join(',')].join(' | ')", 3),
     ("icons", "(function(){var was=themeNow(),o=THEMES.map(function(t){setTheme(t[0]);return drawThemeIcon(256,true).toDataURL().length});setTheme(was);return JSON.stringify(o)})()", 1),
-    ("media", "[typeof MediaRecorder, vidRecType(), 'secure=' + window.isSecureContext, 'mic=' + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), 'audio=' + !!(window.AudioContext || window.webkitAudioContext), 'idb=' + !!window.indexedDB].join(' | ')", 0),
+    ("media", "[typeof MediaRecorder, vidRecType(), 'secure=' + window.isSecureContext, 'mic=' + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), 'audio=' + !!(window.AudioContext || window.webkitAudioContext), 'idb=' + !!window.indexedDB, 'visible=' + document.visibilityState].join(' | ')", 0),
     ("grade", "document.querySelector('.tab[data-t=adjust]').click(); setWheel('gain',[0.4,0.2,10]); schedule(); [typeof parseCube, !!document.querySelector('#wheels canvas')].join(' | ')", 2),
     ("example", "closeVid(); document.querySelector('.tab[data-t=outlines]').click(); openVid(2); 'opened'", 3),
     ("example-play", "[VID.t.toFixed(2), VID.on, VID.plan.clips, VID.c.width + 'x' + VID.c.height].join(' | ')", 0),

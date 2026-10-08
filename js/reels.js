@@ -258,10 +258,40 @@ function vphMake(src, w, h, name) {
   }
 }
 
+// Empty photo slots, shown until there's a photo to use.
+function photoSlot(n) {
+  var c = document.createElement('canvas'),
+    W = c.width = 720,
+    H = c.height = 1280,
+    x = c.getContext('2d'),
+    hue = (n * 67 + 250) % 360,
+    g = x.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, 'hsl(' + hue + ',35%,22%)');
+  g.addColorStop(1, 'hsl(' + (hue + 40) % 360 + ',40%,10%)');
+  x.fillStyle = g;
+  x.fillRect(0, 0, W, H);
+  x.strokeStyle = 'rgba(255,255,255,.35)';
+  x.lineWidth = 4;
+  x.setLineDash([18, 14]);
+  x.strokeRect(60, 60, W - 120, H - 120);
+  x.setLineDash([]);
+  x.fillStyle = 'rgba(255,255,255,.6)';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.font = '300 160px ' + cssv('--sans');
+  x.fillText('+', W / 2, H * .44);
+  x.font = '600 44px ' + cssv('--sans');
+  x.fillText('Your photo ' + (n + 1), W / 2, H * .56);
+  return c
+}
+
 function vidSources() {
   if (VPH.length) return VPH;
-  var src = afterC.width ? afterC : makeSample();
-  return [vphMake(src, src.width, src.height, 'photo')]
+  if (afterC.width) return [vphMake(afterC, afterC.width, afterC.height, 'photo')];
+  return [0, 1, 2].map(function(n) {
+    var c = photoSlot(n);
+    return vphMake(c, c.width, c.height, 'Empty slot')
+  })
 }
 
 function vphAdd(files) {
@@ -1081,7 +1111,7 @@ function vidInfo() {
     o = V.o,
     n = V.plan.clips;
   $('#vidSub').textContent = o[1] + ' · ' + o[2] + ' · ' + o[3] + ' · ' + Math.round(60 / V.plan.spb) + ' BPM' + (V.plan.speed > 1.05 ? ' · plays ' + V.plan.speed.toFixed(V.plan.speed < 10 ? 1 : 0) + '× faster' : '');
-  $('#vidPh').textContent = VPH.length ? n + ' clips using your ' + VPH.length + ' photo' + (VPH.length > 1 ? 's' : '') + (VPH.length < n ? ', repeating them in order' : '') + '.' : n + ' clips. Add up to ' + n + ' photos and each clip gets its own. Until then it uses ' + (afterC.width ? 'your open photo.' : 'the sample photo.')
+  $('#vidPh').textContent = VPH.length ? n + ' clips using your ' + VPH.length + ' photo' + (VPH.length > 1 ? 's' : '') + (VPH.length < n ? ', repeating them in order' : '') + '.' : n + ' clips. Add up to ' + n + ' photos and each clip gets its own. Until then it uses ' + (afterC.width ? 'your open photo.' : 'empty slots.')
 }
 
 function closeVid(keep) {

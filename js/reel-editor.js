@@ -1515,16 +1515,20 @@ function reTemplate(i) {
     RE.bin.push(M.id);
     return M
   });
-  if (!pool.length) {
-    var src = afterC.width ? afterC : makeSample(),
-      cc = document.createElement('canvas');
-    cc.width = src.width;
-    cc.height = src.height;
-    cc.getContext('2d').drawImage(src, 0, 0);
+  if (!pool.length && afterC.width) {
+    var cc = document.createElement('canvas');
+    cc.width = afterC.width;
+    cc.height = afterC.height;
+    cc.getContext('2d').drawImage(afterC, 0, 0);
     var M0 = reMediaFromCanvas(cc, fileName || 'photo');
     RE.bin.push(M0.id);
     pool = [M0]
   }
+  // No photos yet: empty slots to replace, like an Instagram template.
+  var slots = !pool.length;
+  if (slots) pool = [0, 1, 2].map(function(n) {
+    return reMediaFromCanvas(photoSlot(n), 'Empty slot ' + (n + 1))
+  });
   var P = reBlank(),
     trMap = {
       cut: 'none',
@@ -1567,7 +1571,7 @@ function reTemplate(i) {
   RE.panel = null;
   RE.t = 0;
   reCommit('Template: ' + o[0]);
-  toast('Template ready. Replace any clip with your own photo or video')
+  toast(slots ? 'Template ready. Add your photos, then use Replace on each clip' : 'Template ready. Replace any clip with your own photo or video')
 }
 
 function reNewText(txt, a, b, o) {

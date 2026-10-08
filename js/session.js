@@ -8,7 +8,7 @@
 var SESSION_DB = 'nuance-session',
   sessionDbP = null,
   sessionT = null,
-  sessionSrc = null, // {blob} for an opened file or {sample: true}
+  sessionSrc = null, // {buf, type} of the opened file
   sessionRestoring = false;
 
 function sessionDb() {
@@ -45,15 +45,9 @@ function sessionTx(mode, fn) {
   })
 }
 
-// Called when a photo is opened. `blob` is the original file, or null for the sample.
+// Called when a photo is opened with its original file.
 function sessionSetSource(blob) {
-  if (sessionRestoring) return;
-  if (!blob) {
-    sessionPutSrc({
-      sample: true
-    });
-    return
-  }
+  if (sessionRestoring || !blob) return;
   // Raw bytes rather than the File object: older iPhone Safari can't keep files in IndexedDB.
   sessionSrc = null;
   (blob.arrayBuffer ? blob.arrayBuffer() : new Response(blob).arrayBuffer()).then(function(buf) {
@@ -150,14 +144,8 @@ function sessionRestore() {
 }
 
 function decodeSource(src) {
-  if (src.sample) {
-    var c = makeSample();
-    return Promise.resolve({
-      el: c,
-      w: c.width,
-      h: c.height
-    })
-  }
+  // Sessions saved with the old built-in sample photo can't come back.
+  if (src.sample || !src.buf) return Promise.reject(new Error('no saved photo'));
   return new Promise(function(res, rej) {
     var url = URL.createObjectURL(new Blob([src.buf], src.type ? {
         type: src.type

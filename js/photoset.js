@@ -356,15 +356,6 @@ document.addEventListener('keydown', function(e) {
   if (e.key === ']' && setCur < SET.length - 1) setSwitch(setCur + 1)
 });
 
-// The sample photo isn't part of the set.
-var setLoadSample = loadSample;
-loadSample = function() {
-  setStash();
-  setCur = -1;
-  renderSet();
-  setLoadSample()
-};
-
 // Adds the set, edited, to the photos the example reels use.
 function setToTray() {
   var b = $('#vphSet'),
