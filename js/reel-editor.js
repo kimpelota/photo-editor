@@ -1922,10 +1922,11 @@ function reRenderInsp() {
   else if (pn === 'vo') h = reInspVo();
   else if (pn === 'cover') h = reInspCover();
   else if (pn === 'tpl') h = reInspTpl();
+  else if (pn === 'auto') h = reInspAuto();
   else if (k === 'clip') h = pn === 'tr' ? reInspTr(o) : reInspClip(o);
   else if (k === 'text') h = reInspText(o);
   else if (k === 'vo') h = '<h4>Voiceover</h4>' + reSl('riVol', 'Volume', 0, 2, .05, o.vol, rePct) + '<div class="row rbtns"><button class="btn" id="riDel">Delete</button></div>';
-  else h = '<h4>Your reel</h4><p class="rinfo">' + P.clips.length + ' clip' + (P.clips.length === 1 ? '' : 's') + ' · ' + reFmt(reDur(), 1) + (reDur() > RE_MAX ? ' · <b class="warn">Reels can be up to 3 minutes</b>' : '') + '</p><div class="rquick"><button class="btn" data-act="add">+ Photos &amp; videos</button><button class="btn" data-act="text">Aa Text</button><button class="btn" data-act="audio">&#9835; Music</button><button class="btn" data-act="caps">CC Captions</button><button class="btn" data-act="vo">&#127908; Voiceover</button><button class="btn" data-act="tpl">&#9638; Templates</button></div><p class="hint rtips">Click a clip or text on the timeline to edit it. Drag clips to reorder, drag their edges to trim. Drag text on the preview to move it.<br><kbd>Space</kbd> play &middot; <kbd>S</kbd> split &middot; <kbd>D</kbd> duplicate &middot; <kbd>T</kbd> text &middot; <kbd>Del</kbd> delete &middot; <kbd>&larr;</kbd><kbd>&rarr;</kbd> step</p>';
+  else h = '<h4>Your reel</h4><p class="rinfo">' + P.clips.length + ' clip' + (P.clips.length === 1 ? '' : 's') + ' · ' + reFmt(reDur(), 1) + (reDur() > RE_MAX ? ' · <b class="warn">Reels can be up to 3 minutes</b>' : '') + '</p><div class="rquick"><button class="btn pri rwide" data-act="auto">&#10024; Make an edit from my photos</button><button class="btn" data-act="add">+ Photos &amp; videos</button><button class="btn" data-act="text">Aa Text</button><button class="btn" data-act="audio">&#9835; Music</button><button class="btn" data-act="caps">CC Captions</button><button class="btn" data-act="vo">&#127908; Voiceover</button><button class="btn" data-act="tpl">&#9638; Templates</button></div><p class="hint rtips">Click a clip or text on the timeline to edit it. Drag clips to reorder, drag their edges to trim. Drag text on the preview to move it.<br><kbd>Space</kbd> play &middot; <kbd>S</kbd> split &middot; <kbd>D</kbd> duplicate &middot; <kbd>T</kbd> text &middot; <kbd>Del</kbd> delete &middot; <kbd>&larr;</kbd><kbd>&rarr;</kbd> step</p>';
   el.innerHTML = h;
   $$('#reInsp [data-act]').forEach(function(b) {
     b.onclick = function() {
@@ -1937,6 +1938,7 @@ function reRenderInsp() {
   else if (pn === 'vo') reWireVo();
   else if (pn === 'cover') reWireCover();
   else if (pn === 'tpl') reWireTpl();
+  else if (pn === 'auto') reWireAuto();
   else if (k === 'clip') pn === 'tr' ? reWireTr(o) : reWireClip(o);
   else if (k === 'text') reWireText(o);
   else if (k === 'vo') {
@@ -2342,11 +2344,12 @@ function reAct(a) {
         ta.select()
       }
     }, 30)
-  } else if (/^(audio|caps|vo|cover|tpl)$/.test(a)) {
+  } else if (/^(audio|caps|vo|cover|tpl|auto)$/.test(a)) {
     RE.panel = RE.panel === a ? null : a;
     if (a !== 'tpl') RE.sel = null;
     reRenderAll()
   } else if (a === 'beat') reSyncBeat();
+  else if (a === 'pick') $('#reAuto').click();
   else if (a === 'split') reSplit();
   else if (a === 'dup') {
     if (k === 'clip') {
@@ -2440,6 +2443,9 @@ function reGuides() {
 
 function reRenderAll() {
   if (!RE || !RE.open) return;
+  var ph = reHasPlaceholders();
+  $('#reBanner').hidden = !(ph || !RE.proj.clips.length);
+  $('#reBannerT').textContent = ph ? 'This reel still has placeholder photos.' : 'Pick photos from your computer and they become a finished edit.';
   reRenderBin();
   reRenderTL();
   reRenderInsp();
@@ -2644,4 +2650,133 @@ $('#vidUse').onclick = function() {
   var i = VID ? VID.i : 0;
   closeVid();
   reUseTemplate(i)
+};
+
+/* ---------- auto edit ---------- */
+// Photos from your computer → a finished, beat-synced edit in one step, like
+// CapCut's AutoCut: cuts on the beat, the style's transitions and soundtrack,
+// slow zooms and a hook title, all editable afterwards.
+var reAutoStyle = 'hype';
+try {
+  reAutoStyle = REEL_STYLES[localStorage.getItem('nuance.reel.auto')] ? localStorage.getItem('nuance.reel.auto') : 'hype'
+} catch (e) {}
+
+// Empty template slots, and test/sample photos from older versions.
+function reIsPlaceholder(M) {
+  return !!M && /^(Empty slot \d+|lakeside-sunset\.png|selftest\.png)$/.test(M.name || '')
+}
+
+function reHasPlaceholders() {
+  return RE.proj.clips.some(function(c) {
+    return reIsPlaceholder(REM[c.m])
+  })
+}
+
+// Your photos and videos, in the order they're on the timeline, then the rest of the bin.
+function reMyMedia() {
+  var seen = {},
+    out = [];
+  RE.proj.clips.map(function(c) {
+    return c.m
+  }).concat(RE.bin).forEach(function(id) {
+    var M = REM[id];
+    if (!M || seen[id] || M.type === 'audio' || reIsPlaceholder(M)) return;
+    seen[id] = 1;
+    out.push(M)
+  });
+  return out
+}
+
+function reAutoEdit(media, style) {
+  if (!media.length) return toast('Choose some photos first');
+  var st = REEL_STYLES[style],
+    spb = 60 / st.bpm,
+    n = media.length,
+    // Aim for 8-30 s: about a second a photo, longer when there are only a few.
+    target = Math.max(8, Math.min(30, n * (style === 'cinema' ? 2.2 : 1.1))),
+    beats = Math.max(1, Math.min(8, Math.round(target / n / spb))),
+    rnd = vidRnd(n * 977 + style.length * 31),
+    P = reBlank();
+  RE.proj = P;
+  media.forEach(function(M, i) {
+    var c = reAppendClip(M),
+      b = i === n - 1 ? beats * 2 : beats;
+    c.dur = b * spb;
+    if (M.type === 'video') {
+      // Videos keep a little longer, still ending on a beat.
+      c.dur = Math.max(spb, Math.min(M.dur, Math.max(b, 4) * spb));
+      c.dur = Math.max(spb, Math.floor(c.dur / spb + 1e-6) * spb)
+    }
+    c.motion = M.type === 'photo';
+    var tr = st.trans[Math.floor(rnd() * st.trans.length)];
+    c.tr = i === 0 ? 'none' : i === n - 1 && style !== 'talk' ? (style === 'cinema' ? 'zoomblend' : 'flash') : tr === 'cut' ? 'none' : tr
+  });
+  P.music = {
+    kind: 'beat',
+    style: style
+  };
+  P.texts.push(reNewText(style === 'cinema' ? 'moments' : style === 'talk' ? 'a little update' : 'photo dump', 0, Math.min(reDur(), Math.max(1.6, spb * 4)), {
+    font: style === 'cinema' ? 'elegant' : 'strong',
+    size: style === 'cinema' ? .08 : .1,
+    bg: style === 'cinema' ? 'none' : 'outline',
+    anim: 'words',
+    y: .3
+  }));
+  RE.bin = RE.bin.filter(function(id) {
+    return !reIsPlaceholder(REM[id])
+  });
+  media.forEach(function(M) {
+    if (RE.bin.indexOf(M.id) < 0) RE.bin.push(M.id)
+  });
+  RE.sel = null;
+  RE.panel = 'auto';
+  RE.t = 0;
+  reCommit('Auto edit');
+  rePlay(true);
+  toast('Your edit is ready: ' + n + ' clip' + (n > 1 ? 's' : '') + ', ' + reFmt(reDur(), 1) + ', ' + RE_BEATS[style] + ' beat. Tap the title to change it')
+}
+
+function reInspAuto() {
+  var mine = reMyMedia(),
+    opts = {};
+  Object.keys(RE_BEATS).forEach(function(k) {
+    opts[k] = RE_BEATS[k]
+  });
+  return '<h4>&#10024; Auto edit</h4><p class="hint">Choose photos (and videos) from your computer and they become a finished edit: cuts on the beat, transitions, slow zooms, a soundtrack and a title. Change anything afterwards.</p>' +
+    '<div class="lbl">Style</div>' + reChips('riAutoS', opts, reAutoStyle) +
+    '<div class="row rbtns"><button class="btn pri" data-act="pick">Choose photos…</button></div>' +
+    (mine.length ? '<div class="row rbtns"><button class="btn" id="riRemake">Remake with my ' + mine.length + ' photo' + (mine.length > 1 ? 's' : '') + ' in this style</button></div>' : '') +
+    '<p class="hint">Tip: pick them in the order you want. Drag clips on the timeline to reorder afterwards.</p>'
+}
+
+function reWireAuto() {
+  reWireChips('riAutoS', function(v) {
+    reAutoStyle = v;
+    try {
+      localStorage.setItem('nuance.reel.auto', v)
+    } catch (e) {}
+    var mine = reMyMedia();
+    if (mine.length && RE.proj.clips.length) reAutoEdit(mine, v);
+    else reRenderInsp()
+  });
+  if ($('#riRemake')) $('#riRemake').onclick = function() {
+    reAutoEdit(reMyMedia(), reAutoStyle)
+  }
+}
+
+$('#reAuto').onchange = function() {
+  var fs = Array.prototype.slice.call(this.files);
+  this.value = '';
+  if (!fs.length) return;
+  rePlay(false);
+  toast('Adding ' + fs.length + ' file' + (fs.length > 1 ? 's' : '') + '…');
+  reAddFiles(fs, false).then(function(added) {
+    var media = added.filter(function(M) {
+      return M.type !== 'audio'
+    });
+    if (media.length) reAutoEdit(media, reAutoStyle)
+  })
+};
+$('#reBannerGo').onclick = function() {
+  $('#reAuto').click()
 };

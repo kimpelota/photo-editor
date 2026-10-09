@@ -42,6 +42,8 @@ final class App: NSObject, NSApplicationDelegate, WKUIDelegate, WKNavigationDele
     cfg.userContentController.addUserScript(WKUserScript(
       source: "window.NUANCE_APP = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
     cfg.userContentController.add(self, name: "nuance")
+    // The self-test gets throwaway storage so it never leaves drafts or sessions behind.
+    if ProcessInfo.processInfo.environment["NUANCE_SELFTEST"] != nil { cfg.websiteDataStore = .nonPersistent() }
     // Reel Studio plays videos and its soundtrack from its own timeline, not from a click.
     cfg.mediaTypesRequiringUserActionForPlayback = []
     web = WKWebView(frame: .zero, configuration: cfg)

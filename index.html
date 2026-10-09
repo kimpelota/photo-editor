@@ -297,8 +297,10 @@
       <p class="hint red-pick">Pick the media to swap in.</p>
       <input type="file" id="reFile" accept="image/*,video/*,audio/*" multiple hidden>
       <input type="file" id="reSong" accept="audio/*" hidden>
+      <input type="file" id="reAuto" accept="image/*,video/*" multiple hidden>
     </aside>
     <section class="red-stage">
+      <div class="red-banner" id="reBanner" hidden><span id="reBannerT"></span><button class="btn pri" id="reBannerGo">&#10024; Make an edit from my photos…</button></div>
       <div class="red-phone"><canvas id="reC" width="1080" height="1920"></canvas><canvas id="reG" class="vguide"></canvas></div>
       <div class="red-play">
         <button class="ibtn" id="rePlay" aria-label="Play or pause" title="Play/pause (Space)">&#9654;</button>
@@ -321,6 +323,7 @@
     <button data-act="del" title="Delete (Del)">&#128465; Delete</button>
     <span class="vs"></span>
     <button data-act="beat" title="Snap cuts to the music's beat">&#9833; Sync to beat</button>
+    <button data-act="auto">&#10024; Auto edit</button>
     <button data-act="tpl">&#9636; Templates</button>
     <button data-act="cover">&#9635; Cover</button>
   </div>

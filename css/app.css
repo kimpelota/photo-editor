@@ -3998,3 +3998,25 @@ body.re-on {
     overflow-x: auto
   }
 }
+
+.red-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(var(--ac-rgb), .12);
+  border: 1px solid rgba(var(--ac-rgb), .4);
+  font-size: 12.5px;
+  color: var(--tx2)
+}
+
+.red-banner[hidden] {
+  display: none
+}
+
+.rquick .rwide {
+  grid-column: 1 / -1
+}
